@@ -76,6 +76,18 @@ class TaskTracker:
                                }
         self.save()
 
+    def list_tasks(self):
+        self.tasks = self.load()
+        for task in self.tasks:
+            print(
+                f'ID: {self.tasks[task]['id']}\n'
+                f'Task: {self.tasks[task]['title']}\n'
+                f'Description: {self.tasks[task]['description']}\n'
+                f'Status: {self.tasks[task]['status']}\n'
+                f'Created: {self.tasks[task]['createdAt']}\n'
+                f'Updated: {self.tasks[task]['updatedAt']}'
+            )
+
     def delete_task(self, task_id):
         self.tasks = self.load()
         try:
@@ -110,7 +122,7 @@ class TaskTracker:
             self.add_task(args.add)
 
         if args.list:
-            pprint(self.load())
+            self.list_tasks()
         if args.list_done:
             saved_tasks = self.load()
             pprint(list(filter(lambda task: task['status'] == 'done', saved_tasks.values())))
