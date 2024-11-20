@@ -59,6 +59,21 @@ class TaskTrackerTest(unittest.TestCase):
         self.assertIn('doing homeworks', output)
         self.assertIn('vising parents', output)
 
+    def test_delete_task(self):
+        self.tasktracker.delete_task('calling mom')
+        tasks = self.tasktracker.load()
+        self.assertFalse(any(task['title'] == 'calling mom' for task in tasks.values()))
+
+    def test_update_status(self):
+        self.tasktracker.update_status('1', 'done')
+        tasks = self.tasktracker.load()
+        self.assertTrue(tasks['1']['status'] == 'done')
+
+    def test_update_description(self):
+        self.tasktracker.update_description('3', 'read math books')
+        tasks = self.tasktracker.load()
+        self.assertTrue(tasks['3']['description'] == 'read math books')
+
     def tearDown(self):
         if os.path.exists(self.test_file):
             os.remove(self.test_file)

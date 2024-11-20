@@ -4,16 +4,17 @@ import os
 
 from datetime import datetime
 from pprint import pprint
+from typing import Dict
 
 
 class TaskTracker:
-    def __init__(self):
+    def __init__(self) -> None:
         self.tasks_file = 'tasks.json'
         self.parser = argparse.ArgumentParser(prog='TaskTracker')
         self.tasks = dict()
         self._add_arguments()
 
-    def _add_arguments(self):
+    def _add_arguments(self) -> None:
         self.parser.add_argument('-a', '--add', type=str, help='Add task')
         self.parser.add_argument('-u', '--update', type=str, help='Update task by it id ')
         self.parser.add_argument(
@@ -54,17 +55,17 @@ class TaskTracker:
             help='List todo tasks'
         )
 
-    def save(self):
+    def save(self) -> None:
         with open(self.tasks_file, 'w') as f:
             json.dump(self.tasks, f)
 
-    def load(self):
+    def load(self) -> Dict:
         if os.path.exists(self.tasks_file):
             with open(self.tasks_file, 'r') as f:
                 return json.load(f)
         return dict()
 
-    def add_task(self, task):
+    def add_task(self, task) -> None:
         self.tasks = self.load()
         task_id = len(self.tasks) + 1
         self.tasks[task_id] = {'id': task_id,
@@ -76,7 +77,7 @@ class TaskTracker:
                                }
         self.save()
 
-    def list_tasks(self):
+    def list_tasks(self) -> None:
         self.tasks = self.load()
         for task in self.tasks:
             print(
@@ -88,7 +89,7 @@ class TaskTracker:
                 f'Updated: {self.tasks[task]['updatedAt']}'
             )
 
-    def delete_task(self, task_id):
+    def delete_task(self, task_id) -> None:
         self.tasks = self.load()
         try:
             del self.tasks[task_id]
@@ -96,7 +97,7 @@ class TaskTracker:
         except KeyError:
             print('Task not found')
 
-    def update_status(self, task_id, status):
+    def update_status(self, task_id, status) -> None:
         self.tasks = self.load()
         for task in self.tasks:
             if task == task_id:
@@ -106,7 +107,7 @@ class TaskTracker:
             else:
                 print('Task not found')
 
-    def update_description(self, task_id, description):
+    def update_description(self, task_id, description) -> None:
         self.tasks = self.load()
         for task in self.tasks:
             if task == task_id:
@@ -116,7 +117,7 @@ class TaskTracker:
             else:
                 print('Task not found')
 
-    def run(self):
+    def run(self) -> None:
         args = self.parser.parse_args()
         if args.add:
             self.add_task(args.add)
