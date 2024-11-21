@@ -1,8 +1,11 @@
 ## Task Tracker CLI (Python)
-### This project is created for roadmap.sh backend tasktracker cli [project](https://roadmap.sh/projects/task-tracker)
+#### This project is created for roadmap.sh backend tasktracker cli [project](https://roadmap.sh/projects/task-tracker)
 
 ## Table of contents
-
+ - [Features](#features-)
+ - [Requirements](#requirements-)
+ - [Installation](#installation)
+ - [Usage](#usage)
 
 
 ## Features 
