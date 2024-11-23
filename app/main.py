@@ -8,9 +8,14 @@ from collections import defaultdict
 
 class GithubUserActivity:
     def __init__(self):
-
         self.url = 'https://api.github.com/'
         self.headers = {'Accept': 'application/vnd.github+json'}
+        self.event_types = [
+            'CommitComment', 'Create', 'Delete', 'Fork',
+            'Gollum', 'IssueComment', 'Issue', 'Member',
+            'Public', 'PullRequest', 'PullRequestReview', 'PullRequestReviewComment',
+            'PullRequestReviewThread', 'Push', 'Release', 'Sponsorship', 'Watch'
+        ]
         self.parser = argparse.ArgumentParser(description='Github User Activity CLI')
         self.add_argument()
 
@@ -18,36 +23,68 @@ class GithubUserActivity:
         self.parser.add_argument('-u', '--username', help='Github username')
 
     def count_type_to_repo(self, events, type_):
-        repo_push_event = defaultdict(list)
+        repo_event = defaultdict(list)
         for event in events:
             repo_name = event['repo']['name']
-            repo_push_event[repo_name].append(event)
+            repo_event[repo_name].append(event)
 
         if type_ == 'Push':
-            for repo_name, event in repo_push_event.items():
+            for repo_name, event in repo_event.items():
                 print(f'Pushed {len(event)} commits to {repo_name} ')
+        elif type_ == 'CommitComment':
+            for repo_name, event in repo_event.items():
+                print(f'Made {len(event)} comments to {repo_name} ')
         elif type_ == 'Delete':
-            for repo_name, event in repo_push_event.items():
+            for repo_name, event in repo_event.items():
                 print(f'Deleted {len(event)} commits from {repo_name}')
-        elif type_ == 'Pull':
-            for repo_name, event in repo_push_event.items():
-                print(f'Requested {len(event)} Pulls from {repo_name}')
         elif type_ == 'Create':
-            for repo_name, event in repo_push_event.items():
+            for repo_name, event in repo_event.items():
                 print(f'Created {repo_name}')
         elif type_ == 'Watch':
-            for repo_name, event in repo_push_event.items():
+            for repo_name, event in repo_event.items():
                 print(f'Started Watching {repo_name}')
         elif type_ == 'Member':
-            for repo_name, event in repo_push_event.items():
+            for repo_name, event in repo_event.items():
                 print(f'Membered to  {repo_name}: {len(event)}')
+        elif type_ == 'Fork':
+            for repo_name, event in repo_event.items():
+                print(f'Forked {repo_name}')
+        elif type_ == 'Gollum':
+            for repo_name, event in repo_event.items():
+                print(f'Gollum for {repo_name}')
+        elif type_ == 'IssueComment':
+            for repo_name, event in repo_event.items():
+                print(f'IssueComment for {repo_name}')
+        elif type_ == 'Issue':
+            for repo_name, event in repo_event.items():
+                print(f'Opened a issue on {repo_name}')
+        elif type_ == 'Public':
+            for repo_name, event in repo_event.items():
+                print(f'Opened a public repo on {repo_name}')
+        elif type_ == 'PullRequest':
+            for repo_name, event in repo_event.items():
+                print(f'Opened a pull request on {repo_name}')
+        elif type_ == 'PullRequestReview':
+            for repo_name, event in repo_event.items():
+                print(f'Opened a pull request review on {repo_name}')
+        elif type_ == 'PullRequestReviewComment':
+            for repo_name, event in repo_event.items():
+                print(f'Opened a pull request review comment on {repo_name}')
+        elif type_ == 'PullRequestReviewThread':
+            for repo_name, event in repo_event.items():
+                print(f'Opened a pull request review thread on {repo_name}')
+        elif type_ == 'Release':
+            for repo_name, event in repo_event.items():
+                print(f'Opened a release on {repo_name}')
+        elif type_ == 'Sponsorship':
+            for repo_name, event in repo_event.items():
+                print(f'Started sponsoring {repo_name}')
         else:
-            for repo_name, event in repo_push_event.items():
+            for repo_name, event in repo_event.items():
                 print(f'Unknown type {repo_name}: {len(event)}')
 
     def run(self):
         args = self.parser.parse_args()
-        file = f'{args.username}.json'
         req = urllib.request.Request(f'{self.url}users/{args.username}/events', headers=self.headers)
         if args.username:
             try:
@@ -56,12 +93,11 @@ class GithubUserActivity:
             except urllib.error.URLError as error:
                 print(f'Error: {error}')
             else:
-                self.count_type_to_repo(list(filter(lambda event: event['type'] == 'PushEvent', user_events)), 'Push')
-                self.count_type_to_repo(list(filter(lambda event: event['type'] == 'DeleteEvent', user_events)), 'Delete')
-                self.count_type_to_repo(list(filter(lambda event: event['type'] == 'PullRequestEvent', user_events)), 'Pull')
-                self.count_type_to_repo(list(filter(lambda event: event['type'] == 'CreateEvent', user_events)), 'Create')
-                self.count_type_to_repo(list(filter(lambda event: event['type'] == 'WatchEvent', user_events)), 'Watch')
-                self.count_type_to_repo(list(filter(lambda event: event['type'] == 'MemberEvent', user_events)), 'Member')
+                for event_type in self.event_types:
+                    self.count_type_to_repo(
+                        list(filter(lambda event: event['type'] == f'{event_type}Event', user_events)),
+                        event_type
+                    )
 
 
 if __name__ == '__main__':
