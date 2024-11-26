@@ -8,7 +8,7 @@ class ExpenseTrackerTest(unittest.TestCase):
     def setUp(self):
         self.expense = ExpenseTracker()
 
-    @patch('sys.argv', ['app.main.ExpenseTracker', '-a', 'books'])
+    @patch('sys.argv', ['app.main.ExpenseTracker', '-a', '-d', 'book', '-am', 15])
     def test_arguments(self):
         args = self.expense.parser.parse_args()
         self.assertEqual(len(vars(args)), 8)

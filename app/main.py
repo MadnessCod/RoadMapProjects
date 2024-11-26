@@ -41,7 +41,11 @@ class ExpenseTracker:
 
     def add_expense(self, description, amount):
         self.expense = self.load()
-        filtered = list(filter(lambda entry: entry['Description'] == description, self.expense))
+        filtered = list(filter(
+                lambda entry:
+                entry['Description'] == description and entry['Date'] == datetime.date.today().strftime('%Y-%m-%d'),
+                self.expense
+            ))
         if len(filtered) > 0:
             print(f'There is a expense with this description {description}')
             decision = input('If you want to add expense print yes otherwise the expense will be dismissed: ')
@@ -59,8 +63,8 @@ class ExpenseTracker:
         print(f'Expense added successfully (ID: {expense["ID"]})')
 
     def update_description(self, task_id, description):
-        expenses = self.load()
-        for expense in expenses:
+        self.expense = self.load()
+        for expense in self.expense:
             if expense['ID'] == task_id:
                 expense['Description'] = description
                 print(f'Description for ID: {task_id} have changed to {description}')
@@ -69,8 +73,8 @@ class ExpenseTracker:
         print(f'Task with ID {task_id} not found')
 
     def update_amount(self, task_id, amount):
-        expenses = self.load()
-        for expense in expenses:
+        self.expense = self.load()
+        for expense in self.expense:
             if expense['ID'] == task_id:
                 expense['Amount'] = f'{amount}$'
                 print(f'Amount for ID: {task_id} have changed to {amount}')
@@ -110,12 +114,12 @@ class ExpenseTracker:
             else:
                 print('Expenses are empty')
         if args.summery:
-            expenses = self.load()
-            mapped = list(map(lambda amount: int(amount['Amount'].split('$')[0]), expenses))
+            self.expense = self.load()
+            mapped = list(map(lambda amount: int(amount['Amount'].split('$')[0]), self.expense))
             print(f'Total expense :{sum(mapped)}$')
         if args.month:
-            expenses = self.load()
-            filtered = list(filter(lambda entry: datetime.date.fromisoformat(entry['Date']).month == args.month, expenses))
+            self.expense = self.load()
+            filtered = list(filter(lambda entry: datetime.date.fromisoformat(entry['Date']).month == args.month, self.expense))
             filtered_expenses = sum([int(i['Amount'].split('$')[0]) for i in filtered])
             print(f'Total expenses for {calendar.month_name[args.month]}: {filtered_expenses}$')
 
