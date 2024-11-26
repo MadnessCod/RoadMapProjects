@@ -18,7 +18,7 @@ class ExpenseTracker:
         self.parser.add_argument('-u', '--update', help='Update an expense')
         self.parser.add_argument('-de', '--delete', help='Delete an expense')
         self.parser.add_argument('-l', '--list', action='store_true', help='List all expenses')
-        self.parser.add_argument('-s', '--summery', action='store_true', help='view a specific months expense summery')
+        self.parser.add_argument('-s', '--summary', action='store_true', help='view a specific months expense summery')
         self.parser.add_argument('-m', '--month', type=int, help='view a specific month expense summery')
 
     def load(self):
@@ -113,7 +113,7 @@ class ExpenseTracker:
                           )
             else:
                 print('Expenses are empty')
-        if args.summery:
+        if args.summary:
             self.expense = self.load()
             mapped = list(map(lambda amount: int(amount['Amount'].split('$')[0]), self.expense))
             print(f'Total expense :{sum(mapped)}$')
