@@ -3,8 +3,6 @@ import calendar
 import csv
 import datetime
 
-from datetime import date
-
 
 class ExpenseTracker:
     def __init__(self):
@@ -34,16 +32,25 @@ class ExpenseTracker:
         return self.expense
 
     def save(self):
+        for index, expense in enumerate(self.expense):
+            expense['ID'] = index + 1
         with open(self.file, 'w', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=['ID', 'Date', 'Description', 'Amount'])
+            writer = csv.DictWriter(csvfile, fieldnames=['ID', 'Date', 'Time', 'Description', 'Amount'])
             writer.writeheader()
             writer.writerows(self.expense)
 
     def add_expense(self, description, amount):
         self.expense = self.load()
+        filtered = list(filter(lambda entry: entry['Description'] == description, self.expense))
+        if len(filtered) > 0:
+            print(f'There is a expense with this description {description}')
+            decision = input('If you want to add expense print yes otherwise the expense will be dismissed: ')
+            if decision.lower().strip() != 'yes':
+                return
         expense = {
             'ID': len(self.expense) + 1,
-            'Date': date.today().strftime('%Y-%m-%d'),
+            'Date': datetime.date.today().strftime('%Y-%m-%d'),
+            'Time': datetime.datetime.now().time(),
             'Description': description,
             'Amount': f'{amount}$',
         }
@@ -56,9 +63,9 @@ class ExpenseTracker:
         for expense in expenses:
             if expense['ID'] == task_id:
                 expense['Description'] = description
+                print(f'Description for ID: {task_id} have changed to {description}')
                 self.save()
                 return
-
         print(f'Task with ID {task_id} not found')
 
     def update_amount(self, task_id, amount):
@@ -66,9 +73,9 @@ class ExpenseTracker:
         for expense in expenses:
             if expense['ID'] == task_id:
                 expense['Amount'] = f'{amount}$'
+                print(f'Amount for ID: {task_id} have changed to {amount}')
                 self.save()
                 return
-
         print(f'Task with ID {task_id} not found')
 
     def delete_expense(self, task_id):
@@ -77,8 +84,8 @@ class ExpenseTracker:
             if expense['ID'] == task_id:
                 self.expense.remove(expense)
                 self.save()
+                print(f'Expense with ID:{task_id} deleted')
                 return
-
         print(f'Task with ID {task_id} not found')
 
     def run(self):
@@ -93,12 +100,15 @@ class ExpenseTracker:
             self.delete_expense(args.delete)
         if args.list:
             expenses = self.load()
-            for expense in expenses:
-                print(f'ID: {expense["ID"]} '
-                      f'Date: {expense["Date"]} '
-                      f'Description: {expense["Description"]} '
-                      f'Amount: {expense["Amount"]}'
-                      )
+            if expenses:
+                for expense in expenses:
+                    print(f'ID: {expense["ID"]} '
+                          f'Date: {expense["Date"]} '
+                          f'Description: {expense["Description"]} '
+                          f'Amount: {expense["Amount"]}'
+                          )
+            else:
+                print('Expenses are empty')
         if args.summery:
             expenses = self.load()
             mapped = list(map(lambda amount: int(amount['Amount'].split('$')[0]), expenses))
