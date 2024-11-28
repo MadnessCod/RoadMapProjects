@@ -1,6 +1,7 @@
 import argparse
 import random
 import datetime
+import time
 import csv
 
 
@@ -22,7 +23,7 @@ class RandomNumberGenerator:
         self.parser.add_argument('-l', '--list', action='store_true', help='List all user\'s game')
         self.parser.add_argument('-b', '--best', help='Get the lowest attempt of a users for different modes')
 
-    def save(self, attempt=None):
+    def save(self, attempt=None, elapsed=0.):
         args = self.parser.parse_args()
         user = {
             'User': args.username,
@@ -31,13 +32,14 @@ class RandomNumberGenerator:
             'Mode': args.mode,
             'Number': self.number,
             'Guesses': -1 if attempt is None else attempt,
+            'Elapsed': f'{elapsed}s',
         }
         self.users = self.load()
         self.users.append(user)
         with open(self.file, 'w', newline='') as csvfile:
             writer = csv.DictWriter(
                 csvfile,
-                fieldnames=['User', 'Date', 'Time', 'Mode', 'Number', 'Guesses'])
+                fieldnames=['User', 'Date', 'Time', 'Mode', 'Number', 'Guesses', 'Elapsed'])
             writer.writeheader()
             writer.writerows(self.users)
 
@@ -52,6 +54,8 @@ class RandomNumberGenerator:
         return self.users
 
     def game(self, number):
+        print('Great! Let\' start the game\n')
+        start_time = time.time()
         for attempt in range(number):
             try:
                 guess = int(input('Enter your guess: '))
@@ -59,14 +63,17 @@ class RandomNumberGenerator:
                 print('Enter a valid number ')
                 attempt -= 1
             else:
-                if guess in range(1, 100):
+                if guess in range(1, 101):
                     if guess > self.number:
                         print('Too high')
                     elif guess < self.number:
                         print('Too low')
                     elif guess == self.number:
-                        print(f'Correct, the number was {self.number}')
-                        self.save(attempt)
+                        end_time = time.time()
+                        elapsed_time = end_time - start_time
+                        self.save(attempt, round(elapsed_time, 2))
+                        print(
+                            f'Congratulations! You guessed the correct number in {attempt} attempts in {round(elapsed_time, 2)} seconds. ')
                         return
                 else:
                     print(f'Hey enter a number between 1 and 100')
@@ -79,24 +86,25 @@ class RandomNumberGenerator:
         for type_ in ['easy', 'medium', 'hard']:
             filtered = list(filter(lambda entry: entry['Mode'] == type_, entries))
             try:
-                print(min([int(i['Guesses']) for i in filtered if int(i['Guesses']) > 0]))
+                print(
+                    f'the lowest attempt for {type_} is: ',
+                    min([int(i['Guesses']) for i in filtered if int(i['Guesses']) > 0])
+                )
             except ValueError:
-                print(f'There is no attempt for {type_} mode')
+                print(f'There is no best score for {type_} mode')
 
     def run(self):
         args = self.parser.parse_args()
-        if args.username:
+        if args.username and args.mode:
             if args.mode == 'easy':
-                print('You have chosen Easy Mode you have 10 chances ')
+                print('You have chosen Easy Mode you have 10 chances to guess the correct number')
                 self.game(10)
             elif args.mode == 'medium':
-                print('You have chosen Medium Mode you have 5 chances')
+                print('You have chosen Medium Mode you have 5 chances to guess the correct number')
                 self.game(5)
             elif args.mode == 'hard':
-                print('You have chosen Hard Mode you have 3 chances')
+                print('You have chosen Hard Mode you have 3 chances to guess the correct number')
                 self.game(3)
-            else:
-                print('you haven\'t chosen any mode')
         if args.list:
             self.users = self.load()
             for user in self.users:
