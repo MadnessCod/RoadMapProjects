@@ -3,11 +3,23 @@ import json
 
 import urllib.request
 import urllib.error
+
+
 from collections import defaultdict
 
 
 class GithubUserActivity:
-    def __init__(self):
+    """
+    Attributes:
+        url : str
+            url of GitHub user activity api
+        headers : dict
+            Dictionary of HTTP Headers to send with the Request.
+        event_types : list(str)
+            List of different Event Types returned by the API.
+        parser : argparse.ArgumentParser
+    """
+    def __init__(self) -> None:
         self.url = 'https://api.github.com/'
         self.headers = {'Accept': 'application/vnd.github+json'}
         self.event_types = [
@@ -19,10 +31,12 @@ class GithubUserActivity:
         self.parser = argparse.ArgumentParser(description='Github User Activity CLI')
         self.add_argument()
 
-    def add_argument(self):
+    def add_argument(self) -> None:
+        """adds arguments to the parser"""
         self.parser.add_argument('-u', '--username', help='Github username')
 
-    def count_type_to_repo(self, events, type_):
+    def count_type_to_repo(self, events: list, type_: str) -> None:
+        """Counts the number of types of each event type and prints it to the console"""
         repo_event = defaultdict(list)
         for event in events:
             repo_name = event['repo']['name']
@@ -84,6 +98,9 @@ class GithubUserActivity:
                 print(f'Unknown type {repo_name}: {len(event)}')
 
     def run(self):
+        """"Runs different arguments
+        :raises urllib.error.URLError
+        """
         args = self.parser.parse_args()
         req = urllib.request.Request(f'{self.url}users/{args.username}/events', headers=self.headers)
         if args.username:
