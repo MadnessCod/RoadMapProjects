@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Unit Converter{% endblock %}
+
+{% block content %}
+<div class="converter">
+    <h2>Select Conversion Type</h2>
+    <form id="unit-converter-form" method="post">
+        {% csrf_token %}
+        <label for="conversion-type">Conversion Type:</label>
+        <select id="conversion-type" name="conversion_type" onchange="updateUnits()">
+            <option value="length">Length</option>
+            <option value="weight">Weight</option>
+            <option value="temperature">Temperature</option>
+        </select>
+        
+        <label for="from-unit">From:</label>
+        <select id="from-unit" name="from_unit">
+        </select>
+        
+        <label for="to-unit">To:</label>
+        <select id="to-unit" name="to_unit">
+        </select>
+        
+        <label for="value">Value:</label>
+        <input type="number" id="value" name="value" required>
+        
+        <button type="submit">Convert</button>
+    </form>
+
+    <!-- Output Section -->
+    <div id="conversion-result" class="result">
+        <h3>Conversion Result</h3>
+        <p id="output">Enter values above to see the result.</p>
+    </div>
+</div>
+
+<script>
+    const unitOptions = {
+        length: ['Meter', 'Kilometer', 'Centimeter', 'Inch', 'Foot'],
+        weight: ['Kilogram', 'Gram', 'Pound', 'Ounce'],
+        temperature: ['Celsius', 'Fahrenheit', 'Kelvin']
+    };
+
+    function updateUnits() {
+        const conversionType = document.getElementById('conversion-type').value;
+        const fromUnit = document.getElementById('from-unit');
+        const toUnit = document.getElementById('to-unit');
+
+        // Clear existing options
+        fromUnit.innerHTML = '';
+        toUnit.innerHTML = '';
+
+        // Add new options
+        unitOptions[conversionType].forEach(unit => {
+            const optionFrom = document.createElement('option');
+            const optionTo = document.createElement('option');
+            optionFrom.value = unit.toLowerCase();
+            optionFrom.textContent = unit;
+            optionTo.value = unit.toLowerCase();
+            optionTo.textContent = unit;
+            fromUnit.appendChild(optionFrom);
+            toUnit.appendChild(optionTo);
+        });
+    }
+
+    function convertValue(type, fromUnit, toUnit, value) {
+        if (type === 'length') {
+            const lengthConversions = {
+                meter: 1,
+                kilometer: 0.001,
+                centimeter: 100,
+                inch: 39.3701,
+                foot: 3.28084
+            };
+            return value * (lengthConversions[toUnit] / lengthConversions[fromUnit]);
+        }
+
+        if (type === 'weight') {
+            const weightConversions = {
+                kilogram: 1,
+                gram: 1000,
+                pound: 2.20462,
+                ounce: 35.274
+            };
+            return value * (weightConversions[toUnit] / weightConversions[fromUnit]);
+        }
+
+        if (type === 'temperature') {
+            if (fromUnit === 'celsius') {
+                if (toUnit === 'fahrenheit') return (value * 9/5) + 32;
+                if (toUnit === 'kelvin') return value + 273.15;
+            } else if (fromUnit === 'fahrenheit') {
+                if (toUnit === 'celsius') return (value - 32) * 5/9;
+                if (toUnit === 'kelvin') return (value - 32) * 5/9 + 273.15;
+            } else if (fromUnit === 'kelvin') {
+                if (toUnit === 'celsius') return value - 273.15;
+                if (toUnit === 'fahrenheit') return (value - 273.15) * 9/5 + 32;
+            }
+            return value; // If fromUnit and toUnit are the same
+        }
+
+        return value;
+    }
+
+    // Event Listener for Form Submission
+    const form = document.getElementById('unit-converter-form');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const conversionType = document.getElementById('conversion-type').value;
+        const fromUnit = document.getElementById('from-unit').value;
+        const toUnit = document.getElementById('to-unit').value;
+        const value = parseFloat(document.getElementById('value').value);
+
+        if (!isNaN(value)) {
+            const result = convertValue(conversionType, fromUnit, toUnit, value);
+            const output = document.getElementById('output');
+            output.textContent = `${value} ${fromUnit} is equal to ${result.toFixed(2)} ${toUnit}`;
+        } else {
+            alert('Please enter a valid number');
+        }
+    });
+
+    // Initialize with default conversion type
+    updateUnits();
+</script>
+{% endblock %}
