@@ -9,7 +9,9 @@
         <li>
             <h3>{{ article.title }}</h3>
             <p>{{ article.content }}</p>
+            <p><small>By {{ article.author}} on {{ article.created_at }}</small></p>
         </li>
     {% endfor %}
 </ul>
+<a href="{% url 'add_article' %}">Add New Article</a>   
 {% endblock %}
