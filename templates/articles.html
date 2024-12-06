@@ -7,8 +7,10 @@
 <ul>
     {% for article in articles %}
         <li>
-            <h3>{{ article.title }}</h3>
-            <p>{{ article.content }}</p>
+            <h3>
+                <a href="{% url 'article' article.id %}">{{ article.title }}</a>
+            </h3>
+            <p>{{ article.content|truncatewords:20 }}</p>
             <p><small>By {{ article.author}} on {{ article.created_at }}</small></p>
         </li>
     {% endfor %}

@@ -37,7 +37,7 @@ def article(request, article_id):
         article_content = Article.objects.get(pk=article_id)
     except Article.DoesNotExist:
         raise Http404
-    return render(request, 'articles.html', {'article': article_content})
+    return render(request, 'article.html', {'article': article_content})
 
 
 def admin(request):
