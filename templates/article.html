@@ -6,5 +6,14 @@
 <h2>{{ article.title }}</h2>
 <p>{{ article.content }}</p>
 <p><small>By {{ article.author }} on {{ article.created_at }}</small></p>
+
+{% if is_author %}
+    <a href="{% url 'edit_article' article.id %}" class="btn btn-primary">Edit Article</a>
+    <form action="{% url 'delete_article' article.id %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Delete Article</button>
+    </form>
+{% endif %}
+    
 <a href="{% url 'articles' %}">Back to articles</a>
 {% endblock %}

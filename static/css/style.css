@@ -116,3 +116,51 @@ footer a {
 footer a:hover {
     text-decoration: underline;
 }
+
+.btn {
+    padding: 10px 15px;
+    text-decoration: none;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.user-info {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 14px;
+}
+
+.user-info a {
+    margin-left: 10px;
+    text-decoration: none;
+    color: #070000;
+    font-weight: bold;
+    opacity: 1;
+}
+
+.user-info a:hover {
+    text-decoration: underline;
+    color: #388E3C;
+}
+
+.user-info span {
+    font-weight: bold;
+    color: #333;
+}
