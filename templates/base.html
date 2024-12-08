@@ -20,6 +20,10 @@
         {% endif %}
     </div>
 </header>
+{% if user.is_authenticated %}
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">Your Dashboard</a>
+{% endif %}
+    
 <main>
     {% block content %}
     {% endblock %}

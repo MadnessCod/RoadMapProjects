@@ -82,3 +82,9 @@ def add(request):
     else:
         form = ArticleForm()
     return render(request, 'add_article.html', {'form': form})
+
+
+@login_required()
+def dashboard(reqeust):
+    articles = Article.objects.filter(author=reqeust.user.username)
+    return render(reqeust, 'dashboard.html', {'articles': articles})

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Your Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h1>Welcome, {{ user.username }}!</h1>
+    <p>Here are the articles you've published:</p>
+
+    {% if articles %}
+        <ul>
+            {% for article in articles %}
+                <li>
+                    <a href="{% url 'article' article.id %}">{{ article.title }}</a>
+                    <small>Published on {{ article.created_at|date:"F j, Y, g:i a" }}</small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>You haven't published any articles yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
