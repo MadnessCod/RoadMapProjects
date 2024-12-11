@@ -1,8 +1,9 @@
 .idea/
-local_settings.py
+app/local_settings.py
 *.json
-
+Redis/
 __pycache__/local_settings.cpython-312.pyc
+app/__pycache__/local_settings.cpython-312.pyc
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
