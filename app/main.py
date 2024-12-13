@@ -1,17 +1,21 @@
 import argparse
 import json
+import datetime
 
 import requests
+import redis
 
-import datetime
 from local_settings import API_KEY
 
 
 class WeatherAPI:
-    def __init__(self):
+    def __init__(self, expires=datetime.timedelta(days=15), encoding='utf-8'):
         self.base_url = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/'
         self.key = API_KEY
         self.parser = argparse.ArgumentParser(prog='Weather API')
+        self.redis = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+        self.expires = expires
+        self.encoding = encoding
         self.add_argument()
 
     def add_argument(self):
@@ -24,9 +28,19 @@ class WeatherAPI:
         self.parser.add_argument('-e', '--end', type=validate_date,
                                  help='Final date to get weather data shema: YYYY-MM-DD')
 
-    def save(self, data):
-        with open(f'{self.args.location}.json', 'w') as f:
-            json.dump(data, f)
+    def __getitem__(self, key):
+        record = self.redis.get(key)
+        if record:
+            print('Data from cache')
+            return record
+        return None
+
+    def __setitem__(self, content):
+        print('saving data to cache')
+        data = bytes(json.dumps(content), encoding=self.encoding)
+        if data:
+            name = f"{content['address']}-{datetime.datetime.now().strftime('%Y-%m-%d')}"
+            self.redis.setex(name, self.expires, data)
 
     def request(self):
         try:
@@ -36,18 +50,18 @@ class WeatherAPI:
         else:
             status = response.status_code // 100
             if status == 4:
-                print('Client error')
+                print(f'Client error: {response.status_code}')
             elif status == 5:
-                print('Server error')
+                print(f'Server error: {response.status_code}')
             else:
-                self.save(response.json())
+                self.__setitem__(response.json())
 
     def run(self):
         self.args = self.parser.parse_args()
         if self.args.location or self.args.latitude:
             self.base_url = f'{self.base_url}{self.args.location or self.args.latitude}'
             if self.args.start and self.args.end:
-                if self.args.start < self.args.end:
+                if self.args.start > self.args.end:
                     print(f'Start date: {self.args.start} should be smaller than End date: {self.args.end}')
                     return
             if self.args.start:
@@ -55,7 +69,8 @@ class WeatherAPI:
             if self.args.end:
                 self.base_url = f'{self.base_url}/{self.args.end}'
             self.base_url = f'{self.base_url}?key={self.key}'
-            self.request()
+            if not self.__getitem__(f"{self.args.location}-{datetime.datetime.now().strftime('%Y-%m-%d')}"):
+                self.request()
         else:
             print('Either location or latitude must be provided')
 
