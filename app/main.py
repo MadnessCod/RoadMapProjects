@@ -29,10 +29,10 @@ class WeatherAPI:
                                  help='Final date to get weather data shema: YYYY-MM-DD')
 
     def __getitem__(self, key):
-        record = self.redis.get(key)
+        record = self.redis.exists(key)
         if record:
-            print('Data from cache')
-            return record
+            print('getting data from cache')
+            return json.dumps(self.redis.get(key))
         return None
 
     def __setitem__(self, content):
@@ -41,6 +41,9 @@ class WeatherAPI:
         if data:
             name = f"{content['address']}-{datetime.datetime.now().strftime('%Y-%m-%d')}"
             self.redis.setex(name, self.expires, data)
+            print('data have saved to cache')
+        else:
+            print('can\'t save data to cache')
 
     def request(self):
         try:
@@ -56,6 +59,12 @@ class WeatherAPI:
             else:
                 self.__setitem__(response.json())
 
+    def decide(self):
+        if not self.redis.exists(f'{self.args.location}-{datetime.datetime.now().strftime("%Y-%m-%d")}'):
+            self.request()
+        else:
+            data = self.__getitem__(f'{self.args.location}-{datetime.datetime.now().strftime("%Y-%m-%d")}')
+
     def run(self):
         self.args = self.parser.parse_args()
         if self.args.location or self.args.latitude:
@@ -69,8 +78,7 @@ class WeatherAPI:
             if self.args.end:
                 self.base_url = f'{self.base_url}/{self.args.end}'
             self.base_url = f'{self.base_url}?key={self.key}'
-            if not self.__getitem__(f"{self.args.location}-{datetime.datetime.now().strftime('%Y-%m-%d')}"):
-                self.request()
+            self.decide()
         else:
             print('Either location or latitude must be provided')
 
