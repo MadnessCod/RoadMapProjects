@@ -37,10 +37,9 @@ class WeatherAPI:
 
     def __setitem__(self, content):
         print('saving data to cache')
-        data = bytes(json.dumps(content), encoding=self.encoding)
-        if data:
+        if content:
             name = f"{content['address']}-{datetime.datetime.now().strftime('%Y-%m-%d')}"
-            self.redis.setex(name, self.expires, data)
+            self.redis.setex(name, self.expires, json.dumps(content))
             print('data have saved to cache')
         else:
             print('can\'t save data to cache')
@@ -60,10 +59,12 @@ class WeatherAPI:
                 self.__setitem__(response.json())
 
     def decide(self):
-        if not self.redis.exists(f'{self.args.location}-{datetime.datetime.now().strftime("%Y-%m-%d")}'):
-            self.request()
-        else:
-            data = self.__getitem__(f'{self.args.location}-{datetime.datetime.now().strftime("%Y-%m-%d")}')
+        for key in self.redis.scan_iter('*'):
+            value = json.loads(self.redis.get(key))
+            if self.redis.exists(f'{value["address"]}-{datetime.datetime.now().strftime('%Y-%m-%d')}'):
+                data = self.__getitem__(f'{value["address"]}-{datetime.datetime.now().strftime('%Y-%m-%d')}')
+                return
+        self.request()
 
     def run(self):
         self.args = self.parser.parse_args()
