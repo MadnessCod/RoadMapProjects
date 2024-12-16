@@ -1,6 +1,7 @@
 import argparse
 import json
 import datetime
+import sys
 
 import requests
 import redis
@@ -9,13 +10,12 @@ from local_settings import API_KEY
 
 
 class WeatherAPI:
-    def __init__(self, expires=datetime.timedelta(days=15), encoding='utf-8'):
+    def __init__(self, redis_client, expires=datetime.timedelta(days=15)):
         self.base_url = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/'
         self.key = API_KEY
         self.parser = argparse.ArgumentParser(prog='Weather API')
-        self.redis = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+        self.redis = redis_client
         self.expires = expires
-        self.encoding = encoding
         self.add_argument()
 
     def add_argument(self):
@@ -28,21 +28,25 @@ class WeatherAPI:
         self.parser.add_argument('-e', '--end', type=validate_date,
                                  help='Final date to get weather data shema: YYYY-MM-DD')
 
-    def __getitem__(self, key):
+    def get(self, key):
         record = self.redis.exists(key)
         if record:
-            print('getting data from cache')
-            return json.dumps(self.redis.get(key))
+            print('getting data from Redis')
+            print(f'Filename is {key}.json')
+            return
         return None
 
-    def __setitem__(self, content):
+    def set(self, content):
         print('saving data to cache')
         if content:
             name = f"{content['address']}-{datetime.datetime.now().strftime('%Y-%m-%d')}"
             self.redis.setex(name, self.expires, json.dumps(content))
-            print('data have saved to cache')
+            print('data have saved to Redis')
+            with open(f'{name}.json', 'w') as f:
+                json.dump(json.loads(self.redis.get(name)), f)
+            print(f'Data is saved to your system, File name : {name}.json')
         else:
-            print('can\'t save data to cache')
+            print('can\'t save data to Redis')
 
     def request(self):
         try:
@@ -56,13 +60,13 @@ class WeatherAPI:
             elif status == 5:
                 print(f'Server error: {response.status_code}')
             else:
-                self.__setitem__(response.json())
+                self.set(response.json())
 
     def decide(self):
         for key in self.redis.scan_iter('*'):
             value = json.loads(self.redis.get(key))
             if self.redis.exists(f'{value["address"]}-{datetime.datetime.now().strftime('%Y-%m-%d')}'):
-                data = self.__getitem__(f'{value["address"]}-{datetime.datetime.now().strftime('%Y-%m-%d')}')
+                self.get(f'{value["address"]}-{datetime.datetime.now().strftime('%Y-%m-%d')}')
                 return
         self.request()
 
@@ -111,7 +115,6 @@ def validate_date(value):
             return datetime.datetime.strptime(value, format_).date()
         except ValueError:
             continue
-
     try:
         timestamp = int(value)
         return datetime.datetime.fromtimestamp(timestamp)
@@ -123,5 +126,13 @@ def validate_date(value):
 
 
 if __name__ == '__main__':
-    app = WeatherAPI()
+    r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+    try:
+        r.ping()
+    except redis.exceptions.ConnectionError:
+        print('Redis is not available\n'
+              'Check if redis running on localhost, port: 6379\n'
+              'for more information visit https://redis.io/docs/latest/develop/get-started/')
+        sys.exit()
+    app = WeatherAPI(r)
     app.run()

@@ -1,6 +1,7 @@
 .idea/
 app/local_settings.py
 *.json
+*.csv
 Redis/
 __pycache__/local_settings.cpython-312.pyc
 app/__pycache__/local_settings.cpython-312.pyc
