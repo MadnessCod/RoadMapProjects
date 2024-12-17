@@ -2,6 +2,7 @@ import argparse
 import json
 import datetime
 import sys
+import time
 
 import requests
 import redis
@@ -123,6 +124,27 @@ def validate_date(value):
             f'Invalid date format: {value}\n'
             f'Valid formats are {" or ".join(formats)} or Unix timestamp'
         )
+
+
+def rate_limiting(max_calls, period):
+    def decorator(func):
+        call_times = list()
+
+        def wrapper(*args, **kwargs):
+            current_time = time.time()
+            while call_times and call_times[0] < current_time - period:
+                call_times.pop(0)
+
+                if len(call_times) >= max_calls:
+                    sleep_time = period - (current_time - call_times[-1])
+                    time.sleep(sleep_time)
+
+                call_times.append(time.time())
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 if __name__ == '__main__':
