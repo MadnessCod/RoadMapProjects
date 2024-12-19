@@ -10,6 +10,27 @@ import redis
 from local_settings import API_KEY
 
 
+def rate_limiting(max_calls, period):
+    def decorator(func):
+        call_times = list()
+
+        def wrapper(*args, **kwargs):
+            current_time = time.time()
+            while call_times and call_times[0] < current_time - period:
+                call_times.pop(0)
+
+                if len(call_times) >= max_calls:
+                    sleep_time = period - (current_time - call_times[-1])
+                    time.sleep(sleep_time)
+
+                call_times.append(time.time())
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 class WeatherAPI:
     def __init__(self, redis_client, expires=datetime.timedelta(days=15)):
         self.base_url = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/'
@@ -17,6 +38,7 @@ class WeatherAPI:
         self.parser = argparse.ArgumentParser(prog='Weather API')
         self.redis = redis_client
         self.expires = expires
+        self.time_periods = ['today', 'tomorrow', 'yesterday', 'yeartodate', 'monthtodate']
         self.add_argument()
 
     def add_argument(self):
@@ -49,6 +71,7 @@ class WeatherAPI:
         else:
             print('can\'t save data to Redis')
 
+    @rate_limiting(max_calls=10, period=10)
     def request(self):
         try:
             response = requests.get(self.base_url)
@@ -126,25 +149,7 @@ def validate_date(value):
         )
 
 
-def rate_limiting(max_calls, period):
-    def decorator(func):
-        call_times = list()
 
-        def wrapper(*args, **kwargs):
-            current_time = time.time()
-            while call_times and call_times[0] < current_time - period:
-                call_times.pop(0)
-
-                if len(call_times) >= max_calls:
-                    sleep_time = period - (current_time - call_times[-1])
-                    time.sleep(sleep_time)
-
-                call_times.append(time.time())
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
 
 
 if __name__ == '__main__':
