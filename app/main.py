@@ -50,6 +50,8 @@ class WeatherAPI:
                                  help='Initial date to get weather data shema: YYYY-MM-DD')
         self.parser.add_argument('-e', '--end', type=validate_date,
                                  help='Final date to get weather data shema: YYYY-MM-DD')
+        self.parser.add_argument('--i', '--include', type=validate_include,
+                                 help='Extra data to request')
 
     def get(self, key):
         record = self.redis.exists(key)
@@ -149,7 +151,11 @@ def validate_date(value):
         )
 
 
-
+def validate_include(value):
+    elements = ['tempax', 'tempmin', 'temp', 'datetime', 'degreedays']
+    if value not in elements:
+        raise argparse.ArgumentTypeError(f'the data sould be in right format \nacceptibale formats: {elements}')
+    return value
 
 
 if __name__ == '__main__':
