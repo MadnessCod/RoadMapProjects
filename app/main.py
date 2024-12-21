@@ -54,7 +54,7 @@ class RandomNumberGenerator:
         return self.users
 
     def game(self, number):
-        print('Great! Let\' start the game\n')
+        print('Great! Let\'s start the game\n')
         start_time = time.time()
         for attempt in range(number):
             try:
