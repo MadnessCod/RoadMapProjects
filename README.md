@@ -18,15 +18,15 @@
 
 ## Installation
 1. **Create a venv**
-   ```bash
+   ```
    python -m venv .venv
    .venv\Scripts\activate
    ```
    for more information visit [python virtual environments](https://docs.python.org/3/tutorial/venv.html)
 2. **Clone the repository:**
-    ```bash
-    git clone https://github.com/MadnessCod/ExpenseTrackerCLI.git
-    ```          
+   ```bash
+   git clone https://github.com/MadnessCod/ExpenseTrackerCLI.git
+   ```
 3. **install requirements using poetry**
     ```
    poetry install

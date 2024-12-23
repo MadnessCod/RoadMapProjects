@@ -14,8 +14,10 @@ class ExpenseTrackerTest(unittest.TestCase):
         self.assertEqual(len(vars(args)), 8)
         self.assertEqual(args.add, 'books')
 
-    def test_add_expense(self):
-        pass
+    @patch('sys.argv', ['app.main.ExpenseTracker', '-u', '1', '-d', 'buying coffee'])
+    def test_update_description(self):
+        args = self.expense.parser.parse_args()
+        self.assertEqual(args.description, 'buying coffee')
 
     def tearDown(self):
         self.expense = None

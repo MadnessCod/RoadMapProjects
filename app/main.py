@@ -5,6 +5,13 @@ import datetime
 
 
 class ExpenseTracker:
+    """
+    Class to track expenses
+    Attributes:
+        parser: argparse parser
+        file: csv file
+        expense: list[dict()]
+    """
     def __init__(self):
         self.parser = argparse.ArgumentParser(prog='Expense Tracker')
         self.file = 'expense.csv'
@@ -21,7 +28,12 @@ class ExpenseTracker:
         self.parser.add_argument('-s', '--summary', action='store_true', help='view a specific months expense summery')
         self.parser.add_argument('-m', '--month', type=int, help='view a specific month expense summery')
 
-    def load(self):
+    def load(self) -> list[dict]:
+        """
+        Load csv file
+        :raises FileNotFoundError: if file does not exist
+        :return: list of expense
+        """
         try:
             with open(self.file, 'r', newline='') as file:
                 reader = csv.DictReader(file)
@@ -31,7 +43,11 @@ class ExpenseTracker:
             print('File not found')
         return self.expense
 
-    def save(self):
+    def save(self) -> None:
+        """
+        Save csv file
+        :return: None
+        """
         for index, expense in enumerate(self.expense):
             expense['ID'] = index + 1
         with open(self.file, 'w', newline='') as csvfile:
@@ -39,7 +55,13 @@ class ExpenseTracker:
             writer.writeheader()
             writer.writerows(self.expense)
 
-    def add_expense(self, description, amount):
+    def add_expense(self, description: str, amount: int) -> None:
+        """
+        Add an expense, checks if there is an expense with same description in expenses
+        :param description: string expense description
+        :param amount: int expense amount
+        :return: None
+        """
         self.expense = self.load()
         filtered = list(filter(
                 lambda entry:
@@ -62,7 +84,13 @@ class ExpenseTracker:
         self.save()
         print(f'Expense added successfully (ID: {expense["ID"]})')
 
-    def update_description(self, task_id, description):
+    def update_description(self, task_id: str, description: str) -> None:
+        """
+        Update description of an expense with the task id
+        :param task_id: string of task id
+        :param description: string expense description
+        :return: None
+        """
         self.expense = self.load()
         for expense in self.expense:
             if expense['ID'] == task_id:
@@ -72,7 +100,13 @@ class ExpenseTracker:
                 return
         print(f'Task with ID {task_id} not found')
 
-    def update_amount(self, task_id, amount):
+    def update_amount(self, task_id: str, amount: int) -> None:
+        """
+        Update amount of an expense with the task id
+        :param task_id: string of task id
+        :param amount: int expense amount
+        :return: None
+        """
         self.expense = self.load()
         for expense in self.expense:
             if expense['ID'] == task_id:
@@ -82,7 +116,12 @@ class ExpenseTracker:
                 return
         print(f'Task with ID {task_id} not found')
 
-    def delete_expense(self, task_id):
+    def delete_expense(self, task_id: str) -> None:
+        """
+        Delete an expense with the task id
+        :param task_id: string expense task id
+        :return: None
+        """
         self.expense = self.load()
         for expense in self.expense:
             if expense['ID'] == task_id:
@@ -92,7 +131,11 @@ class ExpenseTracker:
                 return
         print(f'Task with ID {task_id} not found')
 
-    def run(self):
+    def run(self) -> None:
+        """
+        Run expense tracker
+        :return: None
+        """
         args = self.parser.parse_args()
         if args.add and args.description and args.amount:
             self.add_expense(args.description, args.amount)
