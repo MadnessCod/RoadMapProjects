@@ -6,14 +6,30 @@ import csv
 
 
 class RandomNumberGenerator:
-    def __init__(self):
+    """
+    A class for guessing game in three different modes (easy, medium, hard)
+    """
+    def __init__(self) -> None:
+        """
+        Creates a random number between 1 and 100
+        Creates a parser (argparse.ArgumentParser)
+        calls add_argument()
+        """
         self.number = random.randint(1, 100)
         self.file = 'Users.csv'
         self.users = list()
         self.parser = argparse.ArgumentParser(prog='Number Guessing Game')
         self.add_argument()
 
-    def add_argument(self):
+    def add_argument(self) -> None:
+        """
+        Adds Argument to self.parser
+            -m, --mode for choosing game mode
+            -u, --user for choosing username
+            -l, --list for getting list of games a user done
+            -b, --best to see best scores in each mode
+        :return: None
+        """
         self.parser.add_argument(
             '-m',
             '--mode',
@@ -23,7 +39,13 @@ class RandomNumberGenerator:
         self.parser.add_argument('-l', '--list', action='store_true', help='List all user\'s game')
         self.parser.add_argument('-b', '--best', help='Get the lowest attempt of a users for different modes')
 
-    def save(self, attempt=None, elapsed=0.):
+    def save(self, attempt=None, elapsed=0.) -> None:
+        """
+        Saves user attempt in guessing the random number in selected mode
+        :param attempt: number of attempts to guess the random number or -1
+        :param elapsed: time took to guess the number or 0 if user couldn't guess the number
+        :return: None
+        """
         args = self.parser.parse_args()
         user = {
             'User': args.username,
@@ -43,7 +65,11 @@ class RandomNumberGenerator:
             writer.writeheader()
             writer.writerows(self.users)
 
-    def load(self):
+    def load(self) -> list:
+        """
+        Loads users data from csv file into a list
+        :return: list of users data
+        """
         try:
             with open(self.file, 'r', newline='') as csvfile:
                 reader = csv.DictReader(csvfile)
@@ -53,7 +79,12 @@ class RandomNumberGenerator:
             print('File not found')
         return self.users
 
-    def game(self, number):
+    def game(self, number: int) -> None:
+        """
+        Function to guess the number in given attempt, calls save function if you guess wrong or right
+        :param number: maximum number of attempts to guess the random number or -1
+        :return: None
+        """
         print('Great! Let\'s start the game\n')
         start_time = time.time()
         for attempt in range(number):
@@ -82,7 +113,11 @@ class RandomNumberGenerator:
         print(f'The game has finished, you could\'t guess the number, the number was {self.number}')
         self.save()
 
-    def best_score(self, entries):
+    def best_score(self, entries: list) -> None:
+        """
+        prints Best score for each mode for specific user
+        :param entries: list of users previous game data from csv file
+        """
         for type_ in ['easy', 'medium', 'hard']:
             filtered = list(filter(lambda entry: entry['Mode'] == type_, entries))
             try:
@@ -93,7 +128,12 @@ class RandomNumberGenerator:
             except ValueError:
                 print(f'There is no best score for {type_} mode')
 
-    def run(self):
+    def run(self) -> None:
+        """
+        calls game function to start playing game
+        prints list of games done before for all users
+        calls best_score function to print best score for each mode for specific user
+        """
         args = self.parser.parse_args()
         if args.username and args.mode:
             if args.mode == 'easy':
