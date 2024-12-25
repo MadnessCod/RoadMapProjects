@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-from local_settings import *
+from .local_settings import *
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -29,6 +29,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # MyApps:
+    'Blog.apps.BlogConfig',
+    # ThirdPartyApps
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
