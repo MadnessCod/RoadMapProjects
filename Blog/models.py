@@ -27,10 +27,17 @@ class Tag(BaseModel):
 class Post(BaseModel):
     title = models.CharField(max_length=250, null=False, blank=False, verbose_name='Title')
     content = models.TextField(null=False, blank=False, verbose_name='Content')
-    tags = models.ForeignKey(
+    tags = models.ManyToManyField(
         'Tag',
         verbose_name='Tags',
-        null=True,
         blank=True,
-        on_delete=models.CASCADE
     )
+
+    class Meta:
+        ordering = ('pk',)
+        verbose_name = 'Post'
+        verbose_name_plural = 'Posts'
+
+    def __str__(self):
+        return self.title
+

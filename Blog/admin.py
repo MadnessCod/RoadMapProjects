@@ -13,6 +13,5 @@ class TagAdmin(admin.ModelAdmin):
 
 @register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'title', 'tags')
-    search_fields = ('title', 'tags')
-    list_filter = ('tags',)
+    list_display = ('id', 'title', 'content')
+    search_fields = ('title',)
