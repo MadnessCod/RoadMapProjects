@@ -43,8 +43,8 @@ class Post(BaseModel):
         Category,
         on_delete=models.PROTECT,
         verbose_name='Category',
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
     )
     tags = models.ManyToManyField(
         'Tag',
