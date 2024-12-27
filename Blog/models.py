@@ -24,9 +24,28 @@ class Tag(BaseModel):
         return self.name
 
 
+class Category(BaseModel):
+    name = models.CharField(max_length=100, null=False, blank=False, verbose_name='Name')
+
+    class Meta:
+        ordering = ('pk',)
+        verbose_name = 'Category'
+        verbose_name_plural = 'Categories'
+
+    def __str__(self):
+        return self.name
+
+
 class Post(BaseModel):
     title = models.CharField(max_length=250, null=False, blank=False, verbose_name='Title')
     content = models.TextField(null=False, blank=False, verbose_name='Content')
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.PROTECT,
+        verbose_name='Category',
+        null=False,
+        blank=False,
+    )
     tags = models.ManyToManyField(
         'Tag',
         verbose_name='Tags',
@@ -40,4 +59,3 @@ class Post(BaseModel):
 
     def __str__(self):
         return self.title
-
