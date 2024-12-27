@@ -8,7 +8,7 @@ from .models import Post, Category, Tag
 # Create your views here.
 
 @csrf_exempt
-def api(request):
+def api(request, post_id=None):
     if request.method == 'GET':
         posts = Post.objects.all()
         response_data = [
@@ -53,3 +53,43 @@ def api(request):
              'updatedAt': post.updated_at,
              },
             status=201)
+
+    elif request.method == 'PUT' and post_id:
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            return JsonResponse({'error': 'Post does not exist'}, status=404)
+
+        if data.get('title'):
+            post.title = data['title']
+
+        if data.get('content'):
+            post.content = data['content']
+
+        if data.get('category'):
+            post.category, _ = Category.objects.get_or_create(name=data['category'])
+
+        if data.get('tags'):
+            post.tags.clear()
+            tags = data['tags']
+            for tag in tags:
+                name, _ = Tag.objects.get_or_create(name=tag)
+                post.tags.add(name)
+
+        post.save()
+
+        return JsonResponse(
+            {'id': post.id,
+             'title': post.title,
+             'content': post.content,
+             'category': post.category.name,
+             'tags': [tag.name for tag in post.tags.all()],
+             'createdAt': post.created_at,
+             'updatedAt': post.updated_at,},
+            status=200,
+        )
