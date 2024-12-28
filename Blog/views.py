@@ -11,6 +11,21 @@ from .models import Post, Category, Tag
 @csrf_exempt
 def api(request, post_id=None):
     if request.method == 'GET':
+        if post_id:
+            try:
+                post = Post.objects.get(id=post_id)
+            except Post.DoesNotExist:
+                return JsonResponse({'error': 'post not found'}, status=404)
+            return JsonResponse({
+                'id': post.id,
+                'title': post.title,
+                'content': post.content,
+                'category': post.category.name,
+                'tag': [tag.name for tag in post.tags.all()],
+                'createdAt': post.created_at,
+                'updatedAt': post.updated_at,
+            }, safe=False, status=200)
+
         term = request.GET.get('term')
         posts = Post.objects.all()
         if term:
