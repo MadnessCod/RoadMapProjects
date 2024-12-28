@@ -2,6 +2,7 @@ import json
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
 from .models import Post, Category, Tag
 
 
@@ -10,7 +11,13 @@ from .models import Post, Category, Tag
 @csrf_exempt
 def api(request, post_id=None):
     if request.method == 'GET':
+        term = request.GET.get('term')
         posts = Post.objects.all()
+        if term:
+            posts = Post.objects.filter(Q(title__icontains=term) |
+                                        Q(content__icontains=term) |
+                                        Q(category__name__icontains=term))
+
         response_data = [
             {
                 'id': post.id,
