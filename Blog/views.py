@@ -109,3 +109,5 @@ def api(request, post_id=None):
 
         post.delete()
         return JsonResponse({'message': 'Post deleted'}, status=204)
+
+    return JsonResponse({'error': 'Method Not Allowed'}, status=405)
