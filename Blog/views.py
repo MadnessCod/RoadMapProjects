@@ -93,3 +93,12 @@ def api(request, post_id=None):
              'updatedAt': post.updated_at,},
             status=200,
         )
+
+    elif request.method == 'DELETE' and post_id:
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            return JsonResponse({'error': 'Post does not exist'}, status=404)
+
+        post.delete()
+        return JsonResponse({'message': 'Post deleted'}, status=204)
