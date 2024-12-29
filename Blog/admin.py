@@ -19,5 +19,9 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'content')
+    list_display = ('id', 'title', 'content', 'category', 'display_tags')
     search_fields = ('title',)
+
+    def display_tags(self, obj):
+        return ', '.join(tag.name for tag in obj.tags.all())
+    display_tags.short_description = 'Tags'

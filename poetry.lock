@@ -35,20 +35,6 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
-name = "djangorestframework"
-version = "3.15.2"
-description = "Web APIs for Django, made easy."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "djangorestframework-3.15.2-py3-none-any.whl", hash = "sha256:2b8871b062ba1aefc2de01f773875441a961fefbf79f5eed1e32b2f096944b20"},
-    {file = "djangorestframework-3.15.2.tar.gz", hash = "sha256:36fe88cd2d6c6bec23dca9804bab2ba5517a8bb9d8f47ebc68981b56840107ad"},
-]
-
-[package.dependencies]
-django = ">=4.2"
-
-[[package]]
 name = "sqlparse"
 version = "0.5.3"
 description = "A non-validating SQL parser."
@@ -77,4 +63,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "f3224b7772246916516075aec405fbec9bca244552b6377a40e76c83c559c6f0"
+content-hash = "428cae710ac87a6d5930bab5a8d2796e20969134778b01ef526592026870b2c5"
