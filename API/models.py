@@ -32,7 +32,7 @@ class TodoList(BaseMode):
 
 class User(BaseMode):
     name = models.CharField(max_length=255)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
     token = models.UUIDField(default=uuid.uuid4, editable=True, unique=True)
 
