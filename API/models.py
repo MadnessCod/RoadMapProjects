@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 
 
@@ -27,3 +29,17 @@ class TodoList(BaseMode):
     def __str__(self):
         return self.title
 
+
+class User(BaseMode):
+    name = models.CharField(max_length=255)
+    email = models.EmailField()
+    password = models.CharField(max_length=255)
+    token = models.UUIDField(default=uuid.uuid4, editable=True, unique=True)
+
+    class Meta:
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
+        ordering = ('pk',)
+
+    def __str__(self):
+        return self.name
