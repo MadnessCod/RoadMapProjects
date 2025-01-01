@@ -1,13 +1,15 @@
 import json
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password, check_password
-
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from .models import User
+
+from .models import User, TodoList
+
+
 # Create your views here.
 
 
@@ -28,7 +30,10 @@ def register(request):
             return JsonResponse({'error': 'Invalid email'}, status=400)
 
         try:
-            user = User.objects.create(name=data.get('name'), email=data.get('email'), password=make_password(data.get('password')))
+            user = User.objects.create(name=data.get('name'),
+                                       email=data.get('email'),
+                                       password=make_password(data.get('password'))
+                                       )
         except IntegrityError as e:
             if 'email' in str(e).lower():
                 return JsonResponse({'error': 'email already exists'}, status=400)
@@ -59,4 +64,29 @@ def login(request):
         except User.DoesNotExist:
             return JsonResponse({'error': 'invalid credential'}, status=401)
 
+    return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+
+@csrf_exempt
+def add_todo(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'error': 'massage not valid'}, status=400)
+
+        token = request.headers.get('Authorization')
+        if not token:
+            return JsonResponse({'message': 'Unauthorized'}, status=401)
+
+        if not data.get('title') or not data.get('description'):
+            return JsonResponse({'message': 'Missing required field'}, status=401)
+
+        todo = TodoList.objects.create(title=data.get('title'), description=data.get('description'))
+
+        return JsonResponse({
+            'id': todo.id,
+            'title': todo.title,
+            'description': todo.description, },
+            status=201)
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
