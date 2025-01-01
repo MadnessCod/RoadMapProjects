@@ -17,19 +17,6 @@ class BaseMode(models.Model):
         return NotImplemented('str method not implemented')
 
 
-class TodoList(BaseMode):
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-
-    class Meta:
-        verbose_name = 'Todo List'
-        verbose_name_plural = 'Todo Lists'
-        ordering = ('pk',)
-
-    def __str__(self):
-        return self.title
-
-
 class User(BaseMode):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
@@ -43,3 +30,23 @@ class User(BaseMode):
 
     def __str__(self):
         return self.name
+
+
+class TodoList(BaseMode):
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False,
+        verbose_name='Author',
+    )
+
+    class Meta:
+        verbose_name = 'Todo List'
+        verbose_name_plural = 'Todo Lists'
+        ordering = ('pk',)
+
+    def __str__(self):
+        return self.title

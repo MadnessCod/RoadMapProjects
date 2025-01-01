@@ -7,7 +7,7 @@ from .models import TodoList, User
 
 @register(TodoList)
 class TodoListAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'description')
+    list_display = ('id', 'title', 'author', 'description')
     list_display_links = ('id', 'title')
 
 
