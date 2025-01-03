@@ -1,6 +1,6 @@
 import json
 
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.validators import validate_email
 from django.contrib.auth.hashers import make_password, check_password
@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from .models import User, TodoList
-
+from .utils import json_validator, authenticate_user, validate_todo
 
 # Create your views here.
 
@@ -16,10 +16,9 @@ from .models import User, TodoList
 @csrf_exempt
 def register(request):
     if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-        except json.decoder.JSONDecodeError:
-            return JsonResponse({'error': 'massage not valid'}, status=400)
+        data, error = json_validator(request.body)
+        if error:
+            return JsonResponse({'error': error}, status=400)
 
         if not data.get('name') or not data.get('email') or not data.get('password'):
             return JsonResponse({'error': 'Missing required field'}, status=401)
@@ -47,10 +46,9 @@ def register(request):
 @csrf_exempt
 def login(request):
     if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-        except json.decoder.JSONDecodeError:
-            return JsonResponse({'error': 'massage not valid'}, status=400)
+        data, error = json_validator(request.body)
+        if error:
+            return JsonResponse({'error': error}, status=400)
 
         if not data.get('email') or not data.get('password'):
             return JsonResponse({'error': 'credential missing'}, status=401)
@@ -70,18 +68,13 @@ def login(request):
 @csrf_exempt
 def add_todo(request):
     if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-        except json.decoder.JSONDecodeError:
-            return JsonResponse({'error': 'massage not valid'}, status=400)
+        data, error = json_validator(request.body)
+        if error:
+            return JsonResponse({'error': error['error']}, status=error['status'])
 
-        token = request.headers.get('Authorization')
-        if not token:
-            return JsonResponse({'message': 'Unauthorized'}, status=401)
-        try:
-            user = User.objects.get(token=token)
-        except User.DoesNotExist:
-            return JsonResponse({'error': 'invalid token'}, status=401)
+        user, error = authenticate_user(request)
+        if error:
+            return JsonResponse({'error': error['error']}, status=error['status'])
 
         if not data.get('title') or not data.get('description'):
             return JsonResponse({'message': 'Missing required field'}, status=401)
@@ -104,26 +97,20 @@ def add_todo(request):
 @csrf_exempt
 def update_todo(request, todo_id):
     if request.method == 'PUT':
-        if not request.headers.get('Authorization'):
-            return JsonResponse({'message': 'Unauthorized'}, status=401)
+        user, error = authenticate_user(request)
+        if error:
+            return JsonResponse({'error': error['error']}, status=error['status'])
 
-        try:
-            user = User.objects.get(token=request.headers.get('Authorization'))
-        except User.DoesNotExist:
-            return JsonResponse({'error': 'invalid token'}, status=401)
-
-        try:
-            data = json.loads(request.body)
-        except json.decoder.JSONDecodeError:
-            return JsonResponse({'error': 'massage not valid'}, status=400)
+        data, error = json_validator(request.body)
+        if error:
+            return JsonResponse({'error': error['error']}, status=error['status'])
 
         if not data.get('title') or not data.get('description'):
             return JsonResponse({'message': 'Missing required field'}, status=401)
 
-        try:
-            todo = TodoList.objects.get(id=todo_id)
-        except TodoList.DoesNotExist:
-            return JsonResponse({'error': 'invalid id'}, status=401)
+        todo, error = validate_todo(todo_id, user)
+        if error:
+            return JsonResponse({'error': error['error']}, status=error['status'])
 
         if data.get('title'):
             todo.title = data.get('title')
@@ -138,3 +125,21 @@ def update_todo(request, todo_id):
         },
             status=201)
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+
+@csrf_exempt
+def delete(request, todo_id):
+    if request.method == 'DELETE':
+        user, error = authenticate_user(request)
+        if error:
+            return JsonResponse({'error': error['error']}, status=error['status'])
+
+        todo, error = validate_todo(todo_id, user)
+        if error:
+            return JsonResponse({'error': error['error']}, status=error['status'])
+
+        todo.delete()
+        return JsonResponse({'message': 'deleted successfully'}, status=200)
+
+    return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
