@@ -91,6 +91,36 @@ def add_todo(request):
             'description': todo.description,
         },
             status=201)
+    if request.method == 'GET':
+        user, error = authenticate_user(request)
+        if error:
+            return JsonResponse({'error': error['error']}, status=error['status'])
+
+        try:
+            page = int(request.GET.get('page', 1))
+            limit = int(request.GET.get('limit', 10))
+        except ValueError:
+            return JsonResponse({'error': 'Invalid number for page or limit'}, status=400)
+
+        start = (page - 1) * limit
+        end = start + limit
+
+        todos = TodoList.objects.all()[start:end]
+
+        if not todos and page != 1:
+            start = 0
+            end = limit
+            todos = TodoList.objects.all()[start:end]
+            page = 1
+
+        todos_list = [
+            {'id': todo.id,
+             'title': todo.title,
+             'description': todo.description, }
+            for todo in todos
+        ]
+        return JsonResponse({'data': todos_list, 'page': page, 'limit': limit, 'total': len(todos_list)}, status=200)
+
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
 
@@ -142,4 +172,3 @@ def delete(request, todo_id):
         return JsonResponse({'message': 'deleted successfully'}, status=200)
 
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
-
