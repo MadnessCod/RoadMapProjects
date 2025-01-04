@@ -91,6 +91,7 @@ def add_todo(request):
             'description': todo.description,
         },
             status=201)
+
     if request.method == 'GET':
         user, error = authenticate_user(request)
         if error:
