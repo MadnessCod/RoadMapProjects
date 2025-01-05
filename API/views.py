@@ -2,13 +2,14 @@ import json
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.core.validators import validate_email
+from django.core.validators import validate_email, MaxLengthValidator
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from .models import User, TodoList, Category
 from .utils import json_validator, authenticate_user, validate_todo
+
 
 # Create your views here.
 
@@ -29,10 +30,11 @@ def register(request):
             return JsonResponse({'error': 'Invalid email'}, status=400)
 
         try:
-            user = User.objects.create(name=data.get('name'),
-                                       email=data.get('email'),
-                                       password=make_password(data.get('password'))
-                                       )
+            user = User.objects.create(
+                name=data.get('name'),
+                email=data.get('email'),
+                password=make_password(data.get('password'))
+            )
         except IntegrityError as e:
             if 'email' in str(e).lower():
                 return JsonResponse({'error': 'email already exists'}, status=400)
@@ -79,7 +81,12 @@ def add_todo(request):
         if not any(data.get(key) for key in ['title', 'description', 'category']):
             return JsonResponse({'message': 'Missing required field'}, status=401)
 
-        category = Category.objects.create(name=data.get('category'))
+        try:
+            max_length = MaxLengthValidator(20)
+            max_length(data.get('category'))
+            category = Category.objects.get_or_create(name=data.get('category'))[0]
+        except ValidationError:
+            return JsonResponse({'error': 'category length exceeds 20 characters'}, status=400)
 
         todo = TodoList.objects.create(
             title=data.get('title'),
@@ -104,6 +111,7 @@ def add_todo(request):
         try:
             page = int(request.GET.get('page', 1))
             limit = int(request.GET.get('limit', 10))
+            category = request.GET.get('category')
         except ValueError:
             return JsonResponse({'error': 'Invalid number for page or limit'}, status=400)
 
@@ -118,6 +126,13 @@ def add_todo(request):
             todos = TodoList.objects.all()[start:end]
             page = 1
 
+        if category:
+            try:
+                category = Category.objects.get(name=category)
+            except Category.DoesNotExist:
+                return JsonResponse({'error': 'Category does not exist'}, status=401)
+            todos = todos.filter(category=category)
+
         todos_list = [
             {'id': todo.id,
              'title': todo.title,
@@ -125,11 +140,12 @@ def add_todo(request):
              'category': todo.category.name,
              } for todo in todos
         ]
-        return JsonResponse({'data': todos_list,
-                             'page': page,
-                             'limit': limit,
-                             'total': len(todos_list)},
-                            status=200)
+        return JsonResponse({
+            'data': todos_list,
+            'page': page,
+            'limit': limit,
+            'total': len(todos_list)},
+            status=200)
 
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 

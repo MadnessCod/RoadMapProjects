@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django.core.validators import MaxLengthValidator
 
 
 # Create your models here.
@@ -33,7 +34,7 @@ class User(BaseModel):
 
 
 class Category(BaseModel):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=20, unique=True, validators=[MaxLengthValidator(20)])
 
     class Meta:
         verbose_name = 'Category'
