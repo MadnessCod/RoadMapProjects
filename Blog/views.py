@@ -201,6 +201,9 @@ def api(request, post_id=None):
         except Post.DoesNotExist:
             return JsonResponse({'error': 'Post does not exist'}, status=404)
 
+        if not any(data.get(key) for key in ('title', 'content', 'category', 'tags')):
+            return JsonResponse({'error': 'at least one field must provided'}, status=400)
+
         if data.get('title'):
             post.title = data['title']
 
