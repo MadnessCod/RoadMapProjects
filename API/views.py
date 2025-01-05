@@ -115,23 +115,25 @@ def add_todo(request):
         except ValueError:
             return JsonResponse({'error': 'Invalid number for page or limit'}, status=400)
 
-        start = (page - 1) * limit
-        end = start + limit
-
-        todos = TodoList.objects.all()[start:end]
-
-        if not todos and page != 1:
-            start = 0
-            end = limit
-            todos = TodoList.objects.all()[start:end]
-            page = 1
+        todos = TodoList.objects.all()
 
         if category:
             try:
                 category = Category.objects.get(name=category)
+                todos = todos.filter(category=category)
             except Category.DoesNotExist:
                 return JsonResponse({'error': 'Category does not exist'}, status=401)
-            todos = todos.filter(category=category)
+
+        start = (page - 1) * limit
+        end = start + limit
+
+        todos = todos[start:end]
+
+        if not todos and page != 1:
+            start = 0
+            end = limit
+            todos = todos[start:end]
+            page = 1
 
         todos_list = [
             {'id': todo.id,
