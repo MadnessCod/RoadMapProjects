@@ -7,7 +7,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from .models import User, TodoList
+from .models import User, TodoList, Category
 from .utils import json_validator, authenticate_user, validate_todo
 
 # Create your views here.
@@ -48,7 +48,7 @@ def login(request):
     if request.method == 'POST':
         data, error = json_validator(request.body)
         if error:
-            return JsonResponse({'error': error}, status=400)
+            return JsonResponse({'error': error['error']}, status=error['status'])
 
         if not data.get('email') or not data.get('password'):
             return JsonResponse({'error': 'credential missing'}, status=401)
@@ -76,19 +76,23 @@ def add_todo(request):
         if error:
             return JsonResponse({'error': error['error']}, status=error['status'])
 
-        if not data.get('title') or not data.get('description'):
+        if not any(data.get(key) for key in ['title', 'description', 'category']):
             return JsonResponse({'message': 'Missing required field'}, status=401)
+
+        category = Category.objects.create(name=data.get('category'))
 
         todo = TodoList.objects.create(
             title=data.get('title'),
             description=data.get('description'),
-            author=user
+            author=user,
+            category=category,
         )
 
         return JsonResponse({
             'id': todo.id,
             'title': todo.title,
             'description': todo.description,
+            'category': todo.category.name,
         },
             status=201)
 
@@ -117,10 +121,15 @@ def add_todo(request):
         todos_list = [
             {'id': todo.id,
              'title': todo.title,
-             'description': todo.description, }
-            for todo in todos
+             'description': todo.description,
+             'category': todo.category.name,
+             } for todo in todos
         ]
-        return JsonResponse({'data': todos_list, 'page': page, 'limit': limit, 'total': len(todos_list)}, status=200)
+        return JsonResponse({'data': todos_list,
+                             'page': page,
+                             'limit': limit,
+                             'total': len(todos_list)},
+                            status=200)
 
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
@@ -136,7 +145,7 @@ def update_todo(request, todo_id):
         if error:
             return JsonResponse({'error': error['error']}, status=error['status'])
 
-        if not data.get('title') or not data.get('description'):
+        if not any(data.get(key) for key in ['title', 'description', 'category']):
             return JsonResponse({'message': 'Missing required field'}, status=401)
 
         todo, error = validate_todo(todo_id, user)
@@ -147,12 +156,15 @@ def update_todo(request, todo_id):
             todo.title = data.get('title')
         if data.get('description'):
             todo.description = data.get('description')
+        if data.get('category'):
+            todo.category = Category.objects.get_or_create(name=data.get('category'))[0]
 
         todo.save()
         return JsonResponse({
             'id': todo.id,
             'title': todo.title,
             'description': todo.description,
+            'category': todo.category.name,
         },
             status=201)
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)

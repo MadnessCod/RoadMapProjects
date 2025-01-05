@@ -5,7 +5,7 @@ from django.db import models
 
 # Create your models here.
 
-class BaseMode(models.Model):
+class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -17,7 +17,7 @@ class BaseMode(models.Model):
         return NotImplemented('str method not implemented')
 
 
-class User(BaseMode):
+class User(BaseModel):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
@@ -32,7 +32,19 @@ class User(BaseMode):
         return self.name
 
 
-class TodoList(BaseMode):
+class Category(BaseModel):
+    name = models.CharField(max_length=255, unique=True)
+
+    class Meta:
+        verbose_name = 'Category'
+        verbose_name_plural = 'Categories'
+        ordering = ('pk',)
+
+    def __str__(self):
+        return self.name
+
+
+class TodoList(BaseModel):
     title = models.CharField(max_length=255)
     description = models.TextField()
     author = models.ForeignKey(
@@ -41,6 +53,12 @@ class TodoList(BaseMode):
         null=False,
         blank=False,
         verbose_name='Author',
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
 
     class Meta:
