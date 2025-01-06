@@ -1,5 +1,7 @@
 import json
 
+from datetime import datetime
+
 from .models import User, TodoList
 
 
@@ -33,3 +35,10 @@ def validate_todo(todo_id, user):
         return None, {'error': 'Unauthorized: You don\'t own this todo', 'status': 401}
 
     return todo, None
+
+
+def validate_date(date):
+    try:
+        return datetime.strptime(date, '%Y-%m-%d').date(), None
+    except ValueError:
+        return None, {'error': 'invalid date', 'status': 400}

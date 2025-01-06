@@ -1,5 +1,3 @@
-import json
-
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.validators import validate_email, MaxLengthValidator
@@ -8,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from .models import User, TodoList, Category
-from .utils import json_validator, authenticate_user, validate_todo
+from .utils import json_validator, authenticate_user, validate_todo, validate_date
 
 
 # Create your views here.
@@ -108,6 +106,17 @@ def add_todo(request):
         if error:
             return JsonResponse({'error': error['error']}, status=error['status'])
 
+        start_date = end_date = None
+
+        if request.GET.get('start'):
+            start_date, error = validate_date(request.GET.get('start'))
+            if error:
+                return JsonResponse({'error': error['error']}, status=error['status'])
+        if request.GET.get('end'):
+            end_date, error = validate_date(request.GET.get('end'))
+            if error:
+                return JsonResponse({'error': error['error']}, status=error['status'])
+
         try:
             page = int(request.GET.get('page', 1))
             limit = int(request.GET.get('limit', 10))
@@ -116,6 +125,16 @@ def add_todo(request):
             return JsonResponse({'error': 'Invalid number for page or limit'}, status=400)
 
         todos = TodoList.objects.all()
+
+        if start_date and end_date:
+            todos = todos.filter(
+                created_at__gte=start_date,
+                created_at__lte=end_date
+            )
+        elif start_date:
+            todos = todos.filter(created_at__gte=start_date)
+        elif end_date:
+            todos = todos.filter(created_at__lte=end_date)
 
         if category:
             try:
