@@ -1,7 +1,7 @@
 import uuid
 
 from django.db import models
-from django.core.validators import MaxLengthValidator
+from django.core.validators import MaxLengthValidator, EmailValidator
 
 
 # Create your models here.
@@ -20,7 +20,7 @@ class BaseModel(models.Model):
 
 class User(BaseModel):
     name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, validators=[EmailValidator()])
     password = models.CharField(max_length=255)
     token = models.UUIDField(default=uuid.uuid4, editable=True, unique=True)
 
