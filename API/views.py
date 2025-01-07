@@ -17,7 +17,7 @@ def register(request):
     if request.method == 'POST':
         data, error = json_validator(request.body)
         if error:
-            return JsonResponse({'error': error}, status=400)
+            return JsonResponse({'error': error['error']}, status=error['status'])
 
         if not data.get('name') or not data.get('email') or not data.get('password'):
             return JsonResponse({'error': 'Missing required field'}, status=401)

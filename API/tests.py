@@ -1,8 +1,10 @@
-from django.test import TestCase
+from django.test import TestCase, Client
+from django.urls import reverse
+from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from .models import Category, User
+from .models import Category, User, TodoList
 
 
 # Create your tests here.
@@ -39,3 +41,77 @@ class UserTestCase(TestCase):
         user = User.objects.create(name='<NAME>', email='<EMAIL>', password='<PASSWORD>')
         with self.assertRaises(ValidationError):
             user.full_clean()
+
+
+class TodoListTestCase(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(name='category1')
+        self.user = User.objects.create(name='<NAME>', email='example@example.com', password='<PASSWORD>')
+
+    def test_todolist_creation(self):
+        todolist = TodoList.objects.create(title='todolist1',
+                                           description='todolist description',
+                                           author=self.user,
+                                           category=self.category)
+
+        self.assertEqual(todolist.title, 'todolist1')
+
+
+class RegisterViewTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('register')
+
+    def test_successful_registration(self):
+        data = {
+            'name': 'test name',
+            'email': 'example@example.com',
+            'password': '<PASSWORD>',
+        }
+        response = self.client.post(self.url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        self.assertIn('token', response.json())
+        user = User.objects.get(email=data['email'])
+        self.assertEqual(user.name, data['name'])
+        self.assertTrue(check_password(data['password'], user.password))
+
+    def test_missing_fields(self):
+        data = {
+            'name': 'test name',
+        }
+
+        response = self.client.post(self.url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()['error'], 'Missing required field')
+
+    def test_invalid_email(self):
+        data = {
+            'name': 'test name',
+            'email': 'notvalidemail.com',
+            'password': '<PASSWORD>',
+        }
+        response = self.client.post(self.url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error'], 'Invalid email')
+
+    def test_duplicate_email(self):
+        User.objects.create(
+            name='<NAME>',
+            email='example@example.com',
+            password='<PASSWORD>'
+        )
+
+        duplicate_email = {
+            'name': 'duplicate name',
+            'email': 'example@example.com',
+            'password': '<PASSWORD>',
+        }
+
+        response = self.client.post(self.url, duplicate_email, content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error'], 'email already exists')
+
+    def test_invalid_method(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response.json()['error'], 'Invalid HTTP method')
