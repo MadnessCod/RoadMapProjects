@@ -1,3 +1,5 @@
+import uuid
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.hashers import check_password, make_password
@@ -158,7 +160,7 @@ class LoginViewTestCase(TestCase):
         self.assertEqual(response.json()['error'], 'credential missing')
 
     def test_invalid_password(self):
-        data ={
+        data = {
             'email': '<EMAIL>',
             'password': 'NotCorrectPassword'
         }
@@ -181,3 +183,50 @@ class LoginViewTestCase(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 405)
         self.assertEqual(response.json()['error'], 'Invalid HTTP method')
+
+
+class AddTodoTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('add')
+        self.user = User.objects.create(
+            name='<NAME>',
+            email='example@example.com',
+            password=make_password('<PASSWORD>'))
+
+    def test_add_todo(self):
+        headers = {
+            'Authorization': f'{self.user.token}'
+        }
+        data = {
+            'title': 'todolist1',
+            'description': 'todolist description',
+            'category': 'category1'
+        }
+        response = self.client.post(self.url, data, content_type='application/json', headers=headers)
+        todolist1 = TodoList.objects.get(title='todolist1')
+
+        self.assertEqual(todolist1.title, 'todolist1')
+        self.assertEqual(todolist1.description, 'todolist description')
+        self.assertEqual(todolist1.category.name, 'category1')
+
+        self.assertEqual(response.status_code, 201)
+        self.assertIn(response.json()['title'], todolist1.title)
+        self.assertIn(response.json()['description'], todolist1.description)
+        self.assertEqual(response.json()['category'], 'category1')
+
+    def test_missing_token(self):
+
+        response = self.client.post(self.url, content_type='application/json')
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Token missing')
+
+    def test_invalid_token(self):
+        headers = {'Authorization': f'{uuid.uuid4()}'}
+
+        response = self.client.post(self.url, content_type='application/json', headers=headers)
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Invalid token')
