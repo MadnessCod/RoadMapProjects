@@ -60,7 +60,7 @@ def login(request):
             else:
                 return JsonResponse({'error': 'invalid credential'}, status=401)
         except User.DoesNotExist:
-            return JsonResponse({'error': 'invalid credential'}, status=401)
+            return JsonResponse({'error': 'Email does not exist'}, status=401)
 
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
