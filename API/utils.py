@@ -41,4 +41,4 @@ def validate_date(date):
     try:
         return datetime.strptime(date, '%Y-%m-%d').date(), None
     except ValueError:
-        return None, {'error': 'invalid date', 'status': 400}
+        return None, {'error': 'invalid date', 'status': 401}

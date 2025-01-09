@@ -1,5 +1,7 @@
 import uuid
 
+from datetime import datetime, timedelta
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.hashers import check_password, make_password
@@ -214,7 +216,6 @@ class AddTodoTestCase(TestCase):
         self.assertEqual(response.json()['category'], 'category1')
 
     def test_missing_token(self):
-
         response = self.client.post(self.url, content_type='application/json')
 
         self.assertEqual(response.status_code, 401)
@@ -270,3 +271,84 @@ class AddTodoTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.json())
         self.assertEqual(response.json()['error'], 'category length exceeds 20 characters')
+
+
+class GetTodoTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('add')
+
+        self.user = User.objects.create(
+            name='<NAME>',
+            email='example@example.com',
+            password=make_password('<PASSWORD>'))
+        self.headers = {'Authorization': f'{self.user.token}'}
+
+        self.data = [{
+            'title': 'todolist1',
+            'description': 'todolist description',
+            'category': 'category1'
+        },
+            {
+                'title': 'todolist2',
+                'description': 'todolist description',
+                'category': 'category2'
+            },
+            {
+                'title': 'todolist3',
+                'description': 'todolist description',
+                'category': 'category3'
+            }]
+
+        for data in self.data:
+            category = Category.objects.create(name=data['category'])
+            TodoList.objects.create(
+                title=data['title'],
+                description=data['description'],
+                category=category,
+                author=self.user,
+            )
+
+    def test_get_todo(self):
+        response = self.client.get(self.url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(TodoList.objects.count(), len(response.json()['data']))
+        self.assertEqual(response.json()['page'], 1)
+        self.assertEqual(response.json()['limit'], 10)
+        self.assertEqual(response.json()['total'], TodoList.objects.count())
+
+    def test_get_missing_token(self):
+
+        response = self.client.get(self.url, content_type='application/json')
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Token missing')
+
+    def test_wrong_token(self):
+        headers = {'Authorization': f'{uuid.uuid4()}'}
+        response = self.client.get(self.url, content_type='application/json', headers=headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Invalid token')
+
+    def test_get_with_date(self):
+        url = (f'{self.url}?start{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}'
+               f'?end={(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")}')
+        response = self.client.get(url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['data']), TodoList.objects.count())
+        self.assertEqual(response.json()['page'], 1)
+        self.assertEqual(response.json()['limit'], 10)
+        self.assertEqual(response.json()['total'], TodoList.objects.count())
+
+    def test_get_wrong_date(self):
+        url = f'{self.url}?start=11-2020-01'
+        response = self.client.get(url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'invalid date')
