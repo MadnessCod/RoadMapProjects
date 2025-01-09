@@ -76,8 +76,8 @@ def add_todo(request):
         if error:
             return JsonResponse({'error': error['error']}, status=error['status'])
 
-        if not any(data.get(key) for key in ['title', 'description', 'category']):
-            return JsonResponse({'message': 'Missing required field'}, status=401)
+        if not data.get('title') or not data.get('description') or not data.get('category'):
+            return JsonResponse({'error': 'Missing required field'}, status=401)
 
         try:
             max_length = MaxLengthValidator(20)

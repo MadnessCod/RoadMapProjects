@@ -193,17 +193,15 @@ class AddTodoTestCase(TestCase):
             name='<NAME>',
             email='example@example.com',
             password=make_password('<PASSWORD>'))
+        self.headers = {'Authorization': f'{self.user.token}'}
 
     def test_add_todo(self):
-        headers = {
-            'Authorization': f'{self.user.token}'
-        }
         data = {
             'title': 'todolist1',
             'description': 'todolist description',
             'category': 'category1'
         }
-        response = self.client.post(self.url, data, content_type='application/json', headers=headers)
+        response = self.client.post(self.url, data, content_type='application/json', headers=self.headers)
         todolist1 = TodoList.objects.get(title='todolist1')
 
         self.assertEqual(todolist1.title, 'todolist1')
@@ -230,3 +228,45 @@ class AddTodoTestCase(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertIn('error', response.json())
         self.assertEqual(response.json()['error'], 'Invalid token')
+
+    def test_missing_fields(self):
+        data = {
+            'title': 'todolist title',
+            'description': 'todolist description',
+        }
+        data2 = {
+            'description': 'todolist description',
+            'category': 'category'
+        }
+        data3 = {
+            'title': 'todolist title',
+            'category': 'category'
+        }
+
+        response = self.client.post(self.url, data, content_type='application/json', headers=self.headers)
+        response2 = self.client.post(self.url, data2, content_type='application/json', headers=self.headers)
+        response3 = self.client.post(self.url, data3, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Missing required field')
+
+        self.assertEqual(response2.status_code, 401)
+        self.assertIn('error', response2.json())
+        self.assertEqual(response2.json()['error'], 'Missing required field')
+
+        self.assertEqual(response3.status_code, 401)
+        self.assertIn('error', response3.json())
+        self.assertEqual(response3.json()['error'], 'Missing required field')
+
+    def test_category_length(self):
+        data = {
+            'title': 'todolist title',
+            'description': 'todolist description',
+            'category': 'More than twenty length category'
+        }
+        response = self.client.post(self.url, data, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'category length exceeds 20 characters')
