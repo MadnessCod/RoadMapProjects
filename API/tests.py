@@ -422,4 +422,76 @@ class GetTodoTestCase(TestCase):
         self.assertEqual(response.json()['error'], 'Invalid HTTP method')
 
 
+class UpdateTodoTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
 
+        self.user = User.objects.create(
+            name='<NAME>',
+            email='example@example.com',
+            password=make_password('<PASSWORD>'))
+
+        self.headers = {'Authorization': f'{self.user.token}'}
+
+        self.data = [
+            {
+                'title': 'todolist1',
+                'description': 'todolist description',
+                'category': 'test'
+            },
+            {
+                'title': 'todolist2',
+                'description': 'todolist description',
+                'category': 'category'
+            },
+            {
+                'title': 'todolist3',
+                'description': 'todolist description',
+                'category': 'test category'
+            }]
+
+        for data in self.data:
+            category = Category.objects.create(name=data['category'])
+            TodoList.objects.create(
+                title=data['title'],
+                description=data['description'],
+                category=category,
+                author=self.user,
+            )
+
+    def test_update_with_correct_data(self):
+        url = reverse('update', args=[1])
+
+        data = {
+            'title': 'updated title',
+            'description': 'updated description',
+            'category': 'updated category'
+        }
+        todo = TodoList.objects.get(id=1)
+        self.assertEqual(todo.title, 'todolist1')
+        self.assertEqual(todo.description, 'todolist description')
+        self.assertEqual(todo.category.name, 'test')
+
+        response = self.client.put(url, data, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['id'], 1)
+        self.assertEqual(response.json()['title'], data['title'])
+        self.assertEqual(response.json()['description'], data['description'])
+        self.assertEqual(response.json()['category'], data['category'])
+
+        todo = TodoList.objects.get(id=1)
+        self.assertEqual(todo.title, data['title'])
+        self.assertEqual(todo.description, data['description'])
+        self.assertEqual(todo.category.name, data['category'])
+
+    def test_invalid_token(self):
+        url = reverse('update', args=[1])
+
+        headers = {'Authorization': f'{uuid.uuid4()}'}
+
+        response = self.client.put(url, content_type='application/json', headers=headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Invalid token')
