@@ -287,17 +287,17 @@ class GetTodoTestCase(TestCase):
         self.data = [{
             'title': 'todolist1',
             'description': 'todolist description',
-            'category': 'category1'
+            'category': 'test'
         },
             {
                 'title': 'todolist2',
                 'description': 'todolist description',
-                'category': 'category2'
+                'category': 'category'
             },
             {
                 'title': 'todolist3',
                 'description': 'todolist description',
-                'category': 'category3'
+                'category': 'test category'
             }]
 
         for data in self.data:
@@ -319,7 +319,6 @@ class GetTodoTestCase(TestCase):
         self.assertEqual(response.json()['total'], TodoList.objects.count())
 
     def test_get_missing_token(self):
-
         response = self.client.get(self.url, content_type='application/json')
 
         self.assertEqual(response.status_code, 401)
@@ -345,6 +344,28 @@ class GetTodoTestCase(TestCase):
         self.assertEqual(response.json()['limit'], 10)
         self.assertEqual(response.json()['total'], TodoList.objects.count())
 
+    def test_with_smaller_end_date(self):
+        url = f'{self.url}?end={(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}'
+
+        response = self.client.get(url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['data']), 0)
+        self.assertEqual(response.json()['page'], 1)
+        self.assertEqual(response.json()['limit'], 10)
+        self.assertEqual(response.json()['total'], 0)
+
+    def test_with_bigger_start_date(self):
+        url = f'{self.url}?start={(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")}'
+
+        response2 = self.client.get(url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response2.status_code, 200)
+        self.assertEqual(len(response2.json()['data']), 0)
+        self.assertEqual(response2.json()['page'], 1)
+        self.assertEqual(response2.json()['limit'], 10)
+        self.assertEqual(response2.json()['total'], 0)
+
     def test_get_wrong_date(self):
         url = f'{self.url}?start=11-2020-01'
         response = self.client.get(url, content_type='application/json', headers=self.headers)
@@ -352,3 +373,53 @@ class GetTodoTestCase(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertIn('error', response.json())
         self.assertEqual(response.json()['error'], 'invalid date')
+
+    def test_big_page_number(self):
+        url = f'{self.url}?page=10'
+
+        response = self.client.get(url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['data']), 0)
+        self.assertEqual(response.json()['page'], 1)
+        self.assertEqual(response.json()['limit'], 10)
+        self.assertEqual(response.json()['total'], 0)
+
+    def test_small_page_number(self):
+        url = f'{self.url}?page=0'
+
+        response = self.client.get(url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Invalid number for page or limit')
+
+    def test_with_category(self):
+        url = f'{self.url}?category=test'
+
+        response = self.client.get(url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['data']), 1)
+        self.assertEqual(response.json()['page'], 1)
+        self.assertEqual(response.json()['limit'], 10)
+        self.assertEqual(response.json()['total'], 1)
+
+    def test_with_invalid_category(self):
+        url = f'{self.url}?category=NoSuchCategory'
+
+        response = self.client.get(url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Category does not exist')
+
+    def test_invalid_method(self):
+        response = self.client.put(self.url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 405)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Invalid HTTP method')
+
+
+

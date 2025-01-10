@@ -120,6 +120,8 @@ def add_todo(request):
         try:
             page = int(request.GET.get('page', 1))
             limit = int(request.GET.get('limit', 10))
+            if page <= 0 or limit <= 0:
+                raise ValueError
             category = request.GET.get('category')
         except ValueError:
             return JsonResponse({'error': 'Invalid number for page or limit'}, status=400)
