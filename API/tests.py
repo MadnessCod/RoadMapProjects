@@ -495,3 +495,56 @@ class UpdateTodoTestCase(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertIn('error', response.json())
         self.assertEqual(response.json()['error'], 'Invalid token')
+
+    def test_missing_field(self):
+        url = reverse('update', args=[1])
+
+        response = self.client.put(url, dict(), content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('message', response.json())
+        self.assertEqual(response.json()['message'], 'Missing required field')
+
+    def test_invalid_todo_id(self):
+        url = reverse('update', args=[4])
+        data = {
+            'title': 'updated title',
+            'description': 'updated description',
+            'category': 'updated category'
+        }
+
+        response = self.client.put(url, data, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'invalid id')
+
+    def test_not_owned_todo(self):
+        url = reverse('update', args=[1])
+        user = User.objects.create(
+            name='SomeOtherGuy',
+            email='<EMAIL>',
+            password=make_password('<PASSWORD>')
+        )
+        headers = {'Authorization': f'{user.token}'}
+
+        data = {
+            'title': 'updated title',
+            'description': 'updated description',
+            'category': 'updated category'
+        }
+
+        response = self.client.put(url, data, content_type='application/json', headers=headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Unauthorized: You don\'t own this todo')
+
+    def test_invalid_method(self):
+        url = reverse('update', args=[1])
+
+        response = self.client.get(url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 405)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Invalid HTTP method')
