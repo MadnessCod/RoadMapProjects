@@ -41,6 +41,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # MyMiddleware
     'API.middleware.Costume404Middleware',
+    'API.middleware.RateLimitMiddleware',
 ]
 
 ROOT_URLCONF = 'TodoListAPI.urls'
@@ -94,6 +95,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Rate limiting
+CACHES = {
+    'default':
+        {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'rate_limit_cache',
+        }
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
