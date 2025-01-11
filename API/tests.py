@@ -548,3 +548,85 @@ class UpdateTodoTestCase(TestCase):
         self.assertEqual(response.status_code, 405)
         self.assertIn('error', response.json())
         self.assertEqual(response.json()['error'], 'Invalid HTTP method')
+
+
+class DeleteTodoTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create(
+            name='<NAME>',
+            email='<EMAIL>',
+            password=make_password('<PASSWORD>')
+        )
+        self.headers = {'Authorization': f'{self.user.token}'}
+        self.data = [
+            {
+                'title': 'todolist1',
+                'description': 'todolist description',
+                'category': 'test'
+            },
+            {
+                'title': 'todolist2',
+                'description': 'todolist description',
+                'category': 'category'
+            },
+            {
+                'title': 'todolist3',
+                'description': 'todolist description',
+                'category': 'test category'
+            }]
+
+        for data in self.data:
+            category = Category.objects.create(name=data['category'])
+            TodoList.objects.create(
+                title=data['title'],
+                description=data['description'],
+                category=category,
+                author=self.user,
+            )
+
+    def test_delete_with_correct_data(self):
+        url = reverse('delete', args=[2])
+
+        response = self.client.delete(url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('message', response.json())
+        self.assertEqual(response.json()['message'], 'deleted successfully')
+
+        self.assertTrue(not TodoList.objects.filter(title='todolist2').exists())
+        self.assertEqual(TodoList.objects.count(), 2)
+
+    def test_invalid_token(self):
+        url = reverse('delete', args=[1])
+        headers = {'Authorization': f'{uuid.uuid4()}'}
+
+        response = self.client.delete(url, content_type='application/json', headers=headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Invalid token')
+
+    def test_invalid_todo_id(self):
+        url = reverse('delete', args=[4])
+        response = self.client.delete(url, content_type='application/json', headers=self.headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'invalid id')
+
+    def test_not_owned_todo(self):
+        url = reverse('delete', args=[1])
+        user = User.objects.create(
+            name='SomeOtherGuy',
+            email='example@example.com',
+            password=make_password('<PASSWORD>')
+        )
+
+        headers = {'Authorization': f'{user.token}'}
+
+        response = self.client.delete(url, content_type='application/json', headers=headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Unauthorized: You don\'t own this todo')
