@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import now
 from django.core.validators import validate_email, MaxLengthValidator
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.exceptions import ValidationError
@@ -56,6 +59,8 @@ def login(request):
         try:
             user = User.objects.get(email=data.get('email'))
             if check_password(data.get('password'), user.password):
+                if now() - user.last_token_refresh > timedelta(days=30):
+                    user.refresh_token()
                 return JsonResponse({'token': str(user.token)}, status=200)
             else:
                 return JsonResponse({'error': 'invalid credential'}, status=401)

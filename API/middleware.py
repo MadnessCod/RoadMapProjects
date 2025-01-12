@@ -22,8 +22,8 @@ class RateLimitMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        limit = 5
-        window = 60
+        limit = 60
+        window = 120
 
         user_key = self.get_user_key(request)
 

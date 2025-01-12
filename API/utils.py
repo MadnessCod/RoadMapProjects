@@ -33,7 +33,6 @@ def validate_todo(todo_id, user):
 
     if todo.author != user:
         return None, {'error': 'Unauthorized: You don\'t own this todo', 'status': 401}
-
     return todo, None
 
 

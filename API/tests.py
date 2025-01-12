@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timedelta
 
 from django.test import TestCase, Client
+from django.utils.timezone import now
 from django.urls import reverse
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.exceptions import ValidationError
@@ -128,7 +129,7 @@ class LoginViewTestCase(TestCase):
         self.user = User.objects.create(
             name='<NAME>',
             email='<EMAIL>',
-            password=make_password('<PASSWORD>')
+            password=make_password('<PASSWORD>'),
         )
 
     def test_correct_info(self):
@@ -136,11 +137,35 @@ class LoginViewTestCase(TestCase):
             'email': '<EMAIL>',
             'password': '<PASSWORD>'
         }
-        # User.objects.create(name='<NAME>', email='example@example.com', password='<PASSWORD>')
+
         response = self.client.post(self.url, data, content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn('token', response.json())
         self.assertEqual(response.json()['token'], str(self.user.token))
+
+    def test_refresh_token(self):
+        user = User.objects.create(
+            name='<NAME>',
+            email='<EMAIL2>',
+            password=make_password('<PASSWORD>'),
+            last_token_refresh=now() - timedelta(days=31)
+        )
+
+        data = {
+            'email': '<EMAIL2>',
+            'password': '<PASSWORD>',
+        }
+
+        old_token = user.token
+        response = self.client.post(self.url, data, content_type='application/json')
+
+        user.refresh_from_db()
+        new_token = response.json()['token']
+
+        self.assertEqual(str(user.token), new_token)
+        self.assertIn('token', response.json())
+        self.assertNotEqual(old_token, new_token)
+        self.assertEqual(response.status_code, 200)
 
     def test_missing_password(self):
         data = {

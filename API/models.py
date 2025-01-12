@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django.utils.timezone import now
 from django.core.validators import MaxLengthValidator, EmailValidator
 
 
@@ -23,6 +24,12 @@ class User(BaseModel):
     email = models.EmailField(unique=True, validators=[EmailValidator()])
     password = models.CharField(max_length=255)
     token = models.UUIDField(default=uuid.uuid4, editable=True, unique=True)
+    last_token_refresh = models.DateTimeField(default=now)
+
+    def refresh_token(self):
+        self.token = uuid.uuid4()
+        self.last_token_refresh = now()
+        self.save()
 
     class Meta:
         verbose_name = 'User'
