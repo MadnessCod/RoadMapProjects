@@ -51,13 +51,18 @@ class UserTestCase(TestCase):
 class TodoListTestCase(TestCase):
     def setUp(self):
         self.category = Category.objects.create(name='category1')
-        self.user = User.objects.create(name='<NAME>', email='example@example.com', password='<PASSWORD>')
+        self.user = User.objects.create(
+            name='<NAME>',
+            email='example@example.com',
+            password='<PASSWORD>')
 
     def test_todolist_creation(self):
-        todolist = TodoList.objects.create(title='todolist1',
-                                           description='todolist description',
-                                           author=self.user,
-                                           category=self.category)
+        todolist = TodoList.objects.create(
+            title='todolist1',
+            description='todolist description',
+            author=self.user,
+            category=self.category
+        )
 
         self.assertEqual(todolist.title, 'todolist1')
 
@@ -254,6 +259,24 @@ class AddTodoTestCase(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertIn('error', response.json())
         self.assertEqual(response.json()['error'], 'Invalid token')
+
+    def test_outdated_token(self):
+        user = User.objects.create(
+            name='<NAME>',
+            email='outdate@example.com',
+            password=make_password('<PASSWORD>'),
+            last_token_refresh=now() - timedelta(days=31)
+        )
+        headers = {'Authorization': f'{user.token}'}
+        data = {
+            'email': 'outdate@example.com',
+            'password': '<PASSWORD>',
+        }
+        response = self.client.post(self.url, data, content_type='application/json', headers=headers)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('error', response.json())
+        self.assertEqual(response.json()['error'], 'Token expired- login again for new token')
 
     def test_missing_fields(self):
         data = {

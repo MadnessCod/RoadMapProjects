@@ -1,6 +1,8 @@
 import json
 
-from datetime import datetime
+from datetime import datetime, timedelta
+
+from django.utils.timezone import now
 
 from .models import User, TodoList
 
@@ -20,6 +22,8 @@ def authenticate_user(request):
 
     try:
         user = User.objects.get(token=request.headers.get('Authorization'))
+        if now() - user.last_token_refresh > timedelta(days=30):
+            return None, {'error': 'Token expired- login again for new token', 'status': 401}
         return user, None
     except User.DoesNotExist:
         return None, {'error': 'Invalid token', 'status': 401}
