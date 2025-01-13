@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.timezone import now
 from django.core.validators import validate_email, MaxLengthValidator
 from django.contrib.auth.hashers import make_password, check_password
@@ -15,7 +15,7 @@ from .utils import json_validator, authenticate_user, validate_todo, validate_da
 # Create your views here.
 
 
-@csrf_exempt
+@ensure_csrf_cookie
 def register(request):
     if request.method == 'POST':
         data, error = json_validator(request.body)
@@ -46,7 +46,7 @@ def register(request):
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
 
-@csrf_exempt
+@ensure_csrf_cookie
 def login(request):
     if request.method == 'POST':
         data, error = json_validator(request.body)
@@ -70,7 +70,7 @@ def login(request):
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
 
-@csrf_exempt
+@ensure_csrf_cookie
 def add_todo(request):
     if request.method == 'POST':
         data, error = json_validator(request.body)
@@ -178,7 +178,7 @@ def add_todo(request):
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
 
-@csrf_exempt
+@ensure_csrf_cookie
 def update_todo(request, todo_id):
     if request.method == 'PUT':
         user, error = authenticate_user(request)
@@ -214,7 +214,7 @@ def update_todo(request, todo_id):
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
 
-@csrf_exempt
+@ensure_csrf_cookie
 def delete(request, todo_id):
     if request.method == 'DELETE':
         user, error = authenticate_user(request)
