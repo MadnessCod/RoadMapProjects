@@ -21,8 +21,8 @@ def register(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-        except json.JSONDecodeError as e:
-            return JsonResponse({'error': str(e)}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid Data'}, status=400)
 
         username = data.get('username')
         email = data.get('email')
@@ -48,6 +48,14 @@ def register(request):
             'access': str(refresh.access_token),
             'refresh': str(refresh),
         })
+
+@csrf_exempt
+def login(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'invalid data'}, status=400)
 
 
 class HomeView(APIView):
