@@ -1,10 +1,12 @@
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 
-from .serializers import UserRegisterSerializer
+from .models import Expense
+from .serializers import UserRegisterSerializer, ExpenseSerializer
 
 
 # Create your views here.
@@ -23,3 +25,15 @@ class RegisterView(APIView):
                 'access': str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ExpenseView(ListCreateAPIView):
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Expense.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
