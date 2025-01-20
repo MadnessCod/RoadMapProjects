@@ -1,3 +1,5 @@
+from django.utils.timezone import now, timedelta
+
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -31,14 +33,31 @@ class ExpenseView(ListCreateAPIView):
     queryset = Expense.objects.all()
     serializer_class = ExpenseSerializer
     permission_classes = [IsAuthenticated]
-    print('I am inside Expense View')
+
+    def get(self, request, *args, **kwargs):
+        data_filter = request.query_params.get('date_filter', None)
+        start_date = request.query_params.get('start_date', None)
+        end_date = request.query_params.get('end_date', None)
+
+        queryset = Expense.objects.filter(user=request.user)
+
+        if data_filter == 'last_week':
+            queryset = queryset.filter(created_at__gt=now() - timedelta(days=7))
+        elif data_filter == 'last_month':
+            queryset = queryset.filter(created_at__gt=now() - timedelta(days=30))
+        elif data_filter == 'last_three_month':
+            queryset = queryset.filter(created_at__gte=now() - timedelta(days=90))
+
+        if start_date and end_date:
+            queryset = queryset.filter(created_at__gte=start_date, created_at_lte=end_date)
+
+        serializer = ExpenseSerializer(queryset, many=True)
+        return Response(serializer.data)
 
     def get_queryset(self):
-        print('I am getting queryset')
         return Expense.objects.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
-        print('I am creating Expense')
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=self.request.user)

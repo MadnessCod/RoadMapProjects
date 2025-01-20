@@ -22,7 +22,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
 
 class ExpenseSerializer(serializers.ModelSerializer):
-    print('inside ExpenseSerializer')
     category_display = serializers.CharField(source='get_category_display', read_only=True)
 
     class Meta:
@@ -30,11 +29,10 @@ class ExpenseSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'amount', 'category', 'category_display', 'user']
         read_only_fields = ['id', 'user', 'category_display']
 
-    def validate_category(self, data):
-        print('I am validating')
+    def validate_category(self, category):
         valid_categories = [i for i in Expense.CATEGORY_CHOICES]
-        if data['category'] not in valid_categories:
+        if category not in valid_categories:
             raise serializers.ValidationError(
                 f'Valid Categories are {", ".join(valid_categories)}'
             )
-        return data
+        return category
