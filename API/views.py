@@ -31,12 +31,18 @@ class ExpenseView(ListCreateAPIView):
     queryset = Expense.objects.all()
     serializer_class = ExpenseSerializer
     permission_classes = [IsAuthenticated]
+    print('I am inside Expense View')
 
     def get_queryset(self):
+        print('I am getting queryset')
         return Expense.objects.filter(user=self.request.user)
 
-    def perform_create(self, serializer):
+    def create(self, request, *args, **kwargs):
+        print('I am creating Expense')
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         serializer.save(user=self.request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ExpenseUpdate(RetrieveUpdateAPIView):
