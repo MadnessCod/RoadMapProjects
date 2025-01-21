@@ -1,6 +1,5 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.urls import reverse
 
 from rest_framework.test import APITestCase
 from rest_framework import status
@@ -38,7 +37,6 @@ class ExpenseTestCase(TestCase):
 class RegisterViewTestCase(APITestCase):
     def setUp(self):
         self.register_url = '/register/'
-        self.url = reverse('register')
         self.valid_payload = {
             'username': 'USERNAME',
             'email': 'example@example.com',
@@ -97,3 +95,45 @@ class RegisterViewTestCase(APITestCase):
         response = self.client.post(self.register_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', response.data)
+
+
+class LoginViewTestCase(APITestCase):
+    def setUp(self):
+        self.login_url = '/login/'
+        self.user = User.objects.create_user(
+            username='USERNAME',
+            email='example@example.com',
+            password='<PASSWORD>'
+        )
+        self.valid_payload = {
+            'username': 'USERNAME',
+            'password': '<PASSWORD>',
+        }
+        self.invalid_payload = {
+            'username': 'USERNAME',
+            'password': 'wrong password'
+        }
+
+    def test_successful_login(self):
+        response = self.client.post(self.login_url, data=self.valid_payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
+
+    def test_unsuccessful_login(self):
+        response = self.client.post(self.login_url, data=self.invalid_payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('detail', response.data)
+        self.assertIn(response.data['detail'], 'No active account found with the given credentials')
+
+    def test_unregistered_user(self):
+        data = {
+            'username': 'UnregisteredUsername',
+            'password': 'WrongPassword'
+        }
+
+        response = self.client.post(self.login_url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('detail', response.data)
+        self.assertIn(response.data['detail'], 'No active account found with the given credentials')
