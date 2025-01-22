@@ -35,7 +35,8 @@ class ExpenseSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'category_display']
 
     def validate_category(self, category):
-        valid_categories = [i for i in Expense.CATEGORY_CHOICES]
+        valid_categories = [i for tup in Expense.CATEGORY_CHOICES for i in tup]
+
         if category not in valid_categories:
             raise serializers.ValidationError(
                 f'Valid Categories are {", ".join(valid_categories)}'
