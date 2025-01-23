@@ -288,6 +288,7 @@ class ExpenseUpdateViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn('detail', response.data)
 
+
 class ExpenseDeleteViewTestCase(APITestCase):
     def setUp(self):
         self.expense_url = '/expenses/1/delete/'
