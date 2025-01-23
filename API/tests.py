@@ -156,6 +156,10 @@ class ExpenseViewTestCase(APITestCase):
             'amount': 10.0,
             'category': 'UTILITIES',
         }
+        self.invalid_payload = {
+            'name': '<NAME>',
+            'description': '',
+        }
 
     def authenticate_user(self):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
@@ -168,3 +172,36 @@ class ExpenseViewTestCase(APITestCase):
         self.assertEqual(response.data['name'], self.valid_payload['name'])
         self.assertEqual(response.data['description'], self.valid_payload['description'])
         self.assertEqual(response.data['amount'], self.valid_payload['amount'])
+
+    def test_unsuccessful_post_expense(self):
+        self.authenticate_user()
+        response = self.client.post(self.expense_url, data=self.invalid_payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('description', response.data)
+        self.assertIn('amount', response.data)
+
+    def test_unauthorized_post_expense(self):
+        response = self.client.post(self.expense_url, data=self.valid_payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('detail', response.data)
+        self.assertIn(response.data['detail'], 'Authentication credentials were not provided.')
+
+    def test_get_expense(self):
+        self.authenticate_user()
+        self.client.post(self.expense_url, data=self.valid_payload, format='json')
+        response = self.client.get(self.expense_url)
+
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['name'], self.valid_payload['name'])
+        self.assertEqual(response.data[0]['description'], self.valid_payload['description'])
+        self.assertEqual(response.data[0]['amount'], self.valid_payload['amount'])
+        self.assertEqual(response.data[0]['category'], self.valid_payload['category'])
+
+    def test_unauthorized_get_expense(self):
+        response = self.client.get(self.expense_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('detail', response.data)
+
