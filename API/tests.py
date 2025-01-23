@@ -205,3 +205,128 @@ class ExpenseViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
 
+
+class ExpenseUpdateViewTestCase(APITestCase):
+    def setUp(self):
+        self.expense_url = '/expenses/1/update'
+        user = User.objects.create_user(
+            username='USERNAME',
+            email='example@example.com',
+            password='<PASSWORD>'
+        )
+        refresh = RefreshToken.for_user(user)
+        self.access_token = str(refresh.access_token)
+
+        Expense.objects.create(
+            name='<NAME>',
+            description='<DESCRIPTION>',
+            amount=10.0,
+            category='UTILITIES',
+            user=user
+        )
+
+    def authenticate(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+
+    def test_successful_update(self):
+        self.authenticate()
+
+        data = {
+            'name': 'ChangedName',
+            'description': '<DESCRIPTION>',
+            'amount': 15.0,
+            'category': 'ELECTRONICS',
+        }
+
+        response = self.client.put(self.expense_url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], data['name'])
+        self.assertEqual(response.data['amount'], data['amount'])
+        self.assertEqual(response.data['category'], data['category'])
+
+    def test_unsuccessful_update(self):
+        self.authenticate()
+        data = {
+            'name': 'ChangedName',
+        }
+        response = self.client.put(self.expense_url, data=data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('description', response.data)
+        self.assertIn('amount', response.data)
+
+    def test_unauthorized_update(self):
+        response = self.client.put(self.expense_url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('detail', response.data)
+
+    def test_partial_update(self):
+        self.authenticate()
+
+        data = {
+            'name': 'ChangedName',
+        }
+        expense = Expense.objects.get(pk=1)
+
+        response = self.client.patch(self.expense_url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], data['name'])
+        self.assertEqual(response.data['description'], expense.description)
+        self.assertEqual(response.data['amount'], expense.amount)
+        self.assertEqual(response.data['category'], expense.category)
+
+    def test_invalid_pk(self):
+        url = '/expenses/2/update/'
+        self.authenticate()
+
+        data = {
+            'name': 'ChangedName',
+        }
+
+        response = self.client.put(url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn('detail', response.data)
+
+class ExpenseDeleteViewTestCase(APITestCase):
+    def setUp(self):
+        self.expense_url = '/expenses/1/delete/'
+        user = User.objects.create_user(
+            username='USERNAME',
+            email='example@example.com',
+            password='<PASSWORD>'
+        )
+        refresh = RefreshToken.for_user(user)
+        self.access_token = str(refresh.access_token)
+        Expense.objects.create(
+            name='<NAME>',
+            description='<DESCRIPTION>',
+            amount=10.0,
+            category='ELECTRONICS',
+            user=user,
+        )
+
+    def authenticate(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+
+    def test_successful_delete(self):
+        self.authenticate()
+
+        response = self.client.delete(self.expense_url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_unauthorized_delete(self):
+        response = self.client.delete(self.expense_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('detail', response.data)
+
+    def test_invalid_pk(self):
+        url = '/expenses/2/delete/'
+
+        self.authenticate()
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn('detail', response.data)
