@@ -1,14 +1,15 @@
 import json
 
 from django.http import JsonResponse
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.db.models import Q
+
 from .models import Post, Category, Tag
 
 
 # Create your views here.
 
-@ensure_csrf_cookie
+@csrf_exempt
 def api(request, post_id=None):
     """
     Documentation for `api` Function in Django Blog App
