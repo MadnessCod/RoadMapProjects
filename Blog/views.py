@@ -166,7 +166,6 @@ def api(request, post_id=None):
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
         tags = data.get('tags')
-
         category, _ = Category.objects.get_or_create(name=data.get('category'))
 
         post = Post.objects.create(title=data['title'], content=data['content'], category=category)
@@ -176,8 +175,12 @@ def api(request, post_id=None):
                 name, _ = Tag.objects.get_or_create(name=tag)
                 post.tags.add(name)
         elif isinstance(tags, str):
-            name, _ = Tag.objects.get_or_create(name=tags)
-            post.tags.add(name)
+            tag_list = [tag.strip() for tag in tags.split(',')]
+            for tag in tag_list:
+                print(tag_list)
+                print(tag)
+                name, _ = Tag.objects.get_or_create(name=tag)
+                post.tags.add(name)
 
         post.save()
         return JsonResponse(
