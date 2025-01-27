@@ -177,8 +177,6 @@ def api(request, post_id=None):
         elif isinstance(tags, str):
             tag_list = [tag.strip() for tag in tags.split(',')]
             for tag in tag_list:
-                print(tag_list)
-                print(tag)
                 name, _ = Tag.objects.get_or_create(name=tag)
                 post.tags.add(name)
 
