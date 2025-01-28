@@ -12,7 +12,7 @@ class ApiTestCase(TestCase):
         self.client = Client()
         self.url = reverse('posts')
 
-        category = Category.objects.create(name='<CATEGORY>')
+        self.category = Category.objects.create(name='<CATEGORY>')
 
         tag1 = Tag.objects.create(name='<TAG1>')
         tag2 = Tag.objects.create(name='<TAG2>')
@@ -20,7 +20,7 @@ class ApiTestCase(TestCase):
         self.post = Post.objects.create(
             title='<TITLE>',
             content='<CONTENT>',
-            category=category,
+            category=self.category,
         )
         self.post.tags.add(tag1, tag2)
 
@@ -34,13 +34,26 @@ class ApiTestCase(TestCase):
             'title': '<TITLE>',
         }
 
-
     def test_successful_get(self):
         response = self.client.get(self.url, content_type='application/json')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 1)
         self.assertEqual(response.json()[0]['title'], '<TITLE>')
+
+    def test_successful_id_get(self):
+        tag3 = Tag.objects.create(name='<TAG3>')
+        post = Post.objects.create(
+            title='<TITLE2>',
+            content='<CONTENT2>',
+            category=self.category,
+        )
+        post.tags.add(tag3)
+
+        url = f'{self.url}2/'
+        response = self.client.get(url, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['title'], '<TITLE2>')
 
     def test_successful_post(self):
         response = self.client.post(self.url, self.valid_payload, content_type='application/json')
@@ -63,3 +76,24 @@ class ApiTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['title'], '<CHANGED TITLE>')
+
+    def test_invalid_id_put(self):
+        url = f'{self.url}2/'
+        response = self.client.put(url, {'title': '<CHANGED TITLE>'}, content_type='application/json')
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('error', response.json())
+
+    def test_successful_delete(self):
+        url = f'{self.url}1/'
+        response = self.client.delete(url, content_type='application/json')
+        self.assertEqual(response.status_code, 204)
+
+    def test_unsuccessful_delete(self):
+        url = f'{self.url}2/'
+        response = self.client.delete(url, content_type='application/json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_not_allowed_method(self):
+        response = self.client.patch(self.url, self.valid_payload, content_type='application/json')
+        self.assertEqual(response.status_code, 405)
