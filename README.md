@@ -32,7 +32,7 @@ A simple personal blog webapp
    pip install poetry
    ```
    ```bash
-   poetry install
+   poetry install[test.http](..%2FGithub%20Projects%2FRESTBlog%2Ftest.http)
    ```
 4. **create a local_settings.py**
    - create a local_settings.py file inside PersonalBlog1 folder
