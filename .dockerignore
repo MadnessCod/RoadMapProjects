@@ -1,5 +1,5 @@
 .env
-ExpenseTrackerAPI/local_settings.py
+TodoListAPI/local_settings.py
 venv/
 **/__pycache__/
 *.pyo
