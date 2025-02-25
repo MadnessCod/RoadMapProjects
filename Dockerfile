@@ -18,5 +18,7 @@ RUN poetry run python -c "from django.core.management.utils import get_random_se
     rm secret_key.txt
 RUN poetry run python manage.py makemigrations && \
     poetry run python manage.py migrate
+RUN useradd --create-home --shell /bin/bash app
+USER app
 EXPOSE 8000
 CMD ["poetry", "run", "python", "manage.py", "runserver"]
