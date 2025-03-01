@@ -14,7 +14,7 @@ WORKDIR /app
 COPY poetry.lock pyproject.toml README.md ./
 RUN $POETRY_VENV/bin/poetry check
 RUN $POETRY_VENV/bin/poetry install --no-interaction --no-cache
-COPY . /app
+COPY .. /app
 RUN poetry run python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())" > secret_key.txt && \
     cp TodoListAPI/sample_settings.py TodoListAPI/local_settings.py && \
     sed -i "s/SECRET_KEY = ''/SECRET_KEY = '$(cat secret_key.txt)'/" TodoListAPI/local_settings.py && \
