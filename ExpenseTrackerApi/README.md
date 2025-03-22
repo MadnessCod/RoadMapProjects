@@ -249,8 +249,8 @@ This project includes unit tests to ensure functionality. To run the tests, foll
 1. Make sure you have the required dependencies installed.
 2. Run the tests using the following command:
 
-```bash
-python manage.py test
+```
+  python manage.py test
 ```
 
 ```markdown

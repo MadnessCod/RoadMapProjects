@@ -36,7 +36,7 @@ class Expense(BaseModel):
         default='OTHER',
     )
 
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         verbose_name='user')
